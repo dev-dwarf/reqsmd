@@ -1,0 +1,10 @@
+{
+  "priority": {
+    "default": null,
+    "hidden": false,
+  },
+  "phase": {
+    "default": null,
+    "hidden": false,
+  },
+}
