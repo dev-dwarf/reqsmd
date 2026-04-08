@@ -90,7 +90,7 @@ a:hover { text-decoration: underline; }
 
 /* Requirements */
 .requirements { display: flex; flex-direction: column; gap: 0; }
-.requirement { border-bottom: 1px solid #ddd; padding: 12px 0; }
+.requirement { padding: 12px 0; }
 .requirement:first-child { padding-top: 0; }
 .requirement:last-child { border-bottom: none; }
 
@@ -100,10 +100,7 @@ a:hover { text-decoration: underline; }
     gap: 12px;
     margin-bottom: 4px;
 }
-.req-header h2, .req-header h3, .req-header h4 { font-weight: 600; margin: 0; }
-.req-header h2 { font-size: 15px; }
-.req-header h3 { font-size: 14px; padding-left: 12px; }
-.req-header h4 { font-size: 13px; padding-left: 24px; }
+.req-header h2, .req-header h3, .req-header h4 { font-weight: 600; font-size: 14px; margin: 0; }
 .req-header a { color: var(--fg); }
 
 .req-meta { display: flex; gap: 10px; }
@@ -121,8 +118,6 @@ a:hover { text-decoration: underline; }
 
 .req-statement { margin-bottom: 6px; }
 .req-header h3 + .req-meta ~ .req-content .req-statement,
-.requirement[data-level="2"] .req-statement { padding-left: 12px; }
-.requirement[data-level="3"] .req-statement { padding-left: 24px; }
 
 .req-rationale { margin-top: 8px; padding-left: 12px; border-left: 2px solid #ddd; font-size: 12px; color: var(--muted); }
 .req-rationale p, .req-rationale li { color: var(--muted); }
@@ -135,7 +130,7 @@ a:hover { text-decoration: underline; }
 /* Compact view */
 body.compact-view .req-rationale,
 body.compact-view .req-links { display: none; }
-body.compact-view .requirement { border-bottom: none; padding: 6px 0; }
+body.compact-view .requirement { padding: 6px 0; }
 body.compact-view .compact-hide { display: none; }
 .req-link { color: var(--accent); font-weight: 500; }
 .req-link-broken { color: #c00; text-decoration: line-through; }

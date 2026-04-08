@@ -48,23 +48,6 @@ The html is especially important, so to expand on that:
 
 Active TODOs:
 
-- other fields:
-  - req
-  - date added
-  - owner
-  - author 
-
-- sidebar should have TOC for current document, and link to parent
-
-- vendor sql.js dependency so that it does not rely on cloudflare
-
-Core:
-- [[links]] inside of code blocks should not be attempted to be resolved as links
-
-Docs:
-- table of contents should be indented by indent level
-- each indent level should be able to be hidden (like code folding)
-
 Tree view:
 right now is shit
 should show parent and child documents as well as link to and from
@@ -73,11 +56,4 @@ obsidian graph view? maybe not a separate web page, but one big one that can sta
   - scroll wheel moves out to a different level of detail
   - double click on a doc goes to its page
   
-Search:
-- order should be id then req column instead of id then rationale. rationale should not be labelled as "content" anywhere
-- drag to reorder columns
-- show hide columns should be collapsible / popup
-- filters should take up less space
-- SQL query should be a dropdown, populated with what filters already has
-
 
