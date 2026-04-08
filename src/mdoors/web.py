@@ -35,10 +35,6 @@ BASE_TEMPLATE = """<!DOCTYPE html>
         </div>
         {parent_link}
         {toc}
-        <div class="nav-section-header">Documents</div>
-        <ul class="nav-tree">
-            {nav_tree}
-        </ul>
         <div class="nav-footer">
             <a href="{root_path}search.html">Search</a>
         </div>
@@ -83,9 +79,6 @@ SEARCH_PAGE_TEMPLATE = """<!DOCTYPE html>
         <div class="nav-header">
             <a href="index.html">MDOORS</a>
         </div>
-        <ul class="nav-tree">
-            {nav_tree}
-        </ul>
         <div class="nav-footer">
             <a href="search.html" class="active">Search</a>
         </div>
@@ -206,32 +199,6 @@ def resolve_references_html(content: str, project: Project, current_doc: Documen
     return ''.join(result)
 
 
-def generate_nav_tree(project: Project, current_doc: Document = None, root_path: str = "") -> str:
-    """Generate navigation tree HTML."""
-    def render_doc(doc: Document, depth: int = 0) -> str:
-        rel_path = os.path.relpath(doc.path, project.root_path)
-        if rel_path == ".":
-            href = f"{root_path}index.html"
-        else:
-            href = f"{root_path}{rel_path}/index.html"
-
-        is_current = current_doc and doc.path == current_doc.path
-        active_class = ' class="active"' if is_current else ""
-
-        parts = [f'<li><a href="{href}"{active_class}>{html.escape(doc.name)}</a>']
-
-        if doc.children:
-            parts.append("<ul>")
-            for child in doc.children:
-                parts.append(render_doc(child, depth + 1))
-            parts.append("</ul>")
-
-        parts.append("</li>")
-        return "\n".join(parts)
-
-    return render_doc(project.root)
-
-
 def generate_toc(doc: Document) -> str:
     """Generate table of contents for a document's requirements."""
     if not doc.requirements:
@@ -239,7 +206,8 @@ def generate_toc(doc: Document) -> str:
 
     parts = ['<div class="nav-section-header">Contents</div>', '<ul class="nav-toc">']
     for req in doc.requirements:
-        parts.append(f'<li><a href="#{html.escape(req.id)}">{html.escape(req.id)}</a></li>')
+        level = get_indent_level(req.id)
+        parts.append(f'<li class="toc-level-{level}"><a href="#{html.escape(req.id)}">{html.escape(req.id)}</a></li>')
     parts.append('</ul>')
     return '\n'.join(parts)
 
@@ -366,8 +334,6 @@ def generate_document_page(doc: Document, project: Project, hidden_fields: set[s
         depth = rel_path.count(os.sep) + 1
         root_path = "../" * depth
 
-    nav_tree = generate_nav_tree(project, doc, root_path)
-
     # Generate requirements HTML
     reqs_html = []
     for req in doc.requirements:
@@ -376,7 +342,7 @@ def generate_document_page(doc: Document, project: Project, hidden_fields: set[s
     # Child documents links
     children_html = ""
     if doc.children:
-        children_parts = ["<section class='child-docs'><h2>Child Documents</h2><ul>"]
+        children_parts = ["<section class='child-docs compact-hide'><h2>Child Documents</h2><ul>"]
         for child in doc.children:
             child_rel = os.path.relpath(child.path, doc.path)
             children_parts.append(f'<li><a href="{child_rel}/index.html">{html.escape(child.name)}</a></li>')
@@ -391,10 +357,10 @@ def generate_document_page(doc: Document, project: Project, hidden_fields: set[s
             <a href="tree.html" class="tree-link">Tree</a>
         </div>
     </header>
+    {children_html}
     <section class="requirements">
         {"".join(reqs_html)}
     </section>
-    {children_html}
     """
 
     # Generate TOC and parent link
@@ -404,7 +370,6 @@ def generate_document_page(doc: Document, project: Project, hidden_fields: set[s
     return BASE_TEMPLATE.format(
         title=doc.name,
         root_path=root_path,
-        nav_tree=nav_tree,
         toc=toc,
         parent_link=parent_link,
         content=content
@@ -419,8 +384,6 @@ def generate_tree_page(doc: Document, project: Project) -> str:
     else:
         depth = rel_path.count(os.sep) + 1
         root_path = "../" * depth
-
-    nav_tree = generate_nav_tree(project, doc, root_path)
 
     # Build nodes and edges for visualization
     nodes = []
@@ -476,7 +439,6 @@ def generate_tree_page(doc: Document, project: Project) -> str:
     return BASE_TEMPLATE.format(
         title=f"{doc.name} - Tree",
         root_path=root_path,
-        nav_tree=nav_tree,
         toc=toc,
         parent_link=parent_link,
         content=content
@@ -525,9 +487,7 @@ def generate_website(project: Project, output_path: Path):
     }
 
     # Generate search page
-    nav_tree = generate_nav_tree(project, root_path="")
     search_html = SEARCH_PAGE_TEMPLATE.format(
-        nav_tree=nav_tree,
         config_json=json.dumps(config)
     )
     (output_path / "search.html").write_text(search_html, encoding="utf-8")
