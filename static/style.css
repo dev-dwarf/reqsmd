@@ -50,6 +50,9 @@ a:hover { text-decoration: underline; }
 .nav-toc li { padding: 0; }
 .nav-toc a { color: #888; display: block; padding: 2px 10px; font-size: 11px; }
 .nav-toc a:hover { color: var(--bg); background: #333; text-decoration: none; }
+.nav-toc .toc-level-1 a { padding-left: 10px; }
+.nav-toc .toc-level-2 a { padding-left: 20px; }
+.nav-toc .toc-level-3 a { padding-left: 30px; }
 
 .nav-footer { padding: 10px; border-top: 1px solid #333; }
 .nav-footer a { color: #888; }
@@ -133,12 +136,12 @@ a:hover { text-decoration: underline; }
 body.compact-view .req-rationale,
 body.compact-view .req-links { display: none; }
 body.compact-view .requirement { border-bottom: none; padding: 6px 0; }
-body.compact-view .meta-item.compact-hide { display: none; }
+body.compact-view .compact-hide { display: none; }
 .req-link { color: var(--accent); font-weight: 500; }
 .req-link-broken { color: #c00; text-decoration: line-through; }
 
 /* Child docs */
-.child-docs { margin-top: 20px; padding-top: 10px; border-top: 1px solid var(--fg); }
+.child-docs { margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--fg); }
 .child-docs h2 { font-size: 11px; text-transform: uppercase; margin-bottom: 6px; }
 .child-docs ul { list-style: none; }
 .child-docs li::before { content: "→ "; color: var(--muted); }
