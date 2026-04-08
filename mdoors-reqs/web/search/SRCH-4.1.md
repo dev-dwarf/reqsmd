@@ -1,0 +1,12 @@
+{
+  "req": "The sql.js library shall be vendored locally rather than loaded from a CDN.",
+  "priority": 2,
+  "phase": "web",
+}
+---
+Vendoring dependencies:
+- Enables offline use of the website
+- Removes external network dependencies
+- Ensures consistent behavior regardless of CDN availability
+
+The `sql-wasm.js` and `sql-wasm.wasm` files should be included in the generated output.

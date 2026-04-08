@@ -112,6 +112,7 @@ SEARCH_PAGE_TEMPLATE = """<!DOCTYPE html>
         </div>
 
         <div id="results">
+            <div id="error-message" style="display:none"></div>
             <table id="results-table">
                 <thead></thead>
                 <tbody></tbody>
@@ -136,9 +137,25 @@ def get_indent_level(req_id: str) -> int:
     # Find the numeric suffix (after the last dash or the whole string if no dash)
     parts = req_id.rsplit('-', 1)
     suffix = parts[-1] if len(parts) > 1 else req_id
-    # Count dots to determine nesting level
+    # Strip trailing .0 before counting (e.g. REQ-1.0 treated same as REQ-1)
+    if suffix.endswith('.0'):
+        suffix = suffix[:-2]
     dot_count = suffix.count('.')
     return min(dot_count + 1, 3)  # Cap at level 3
+
+
+def _ensure_blank_line_before_lists(content: str) -> str:
+    """Insert blank line before list items that immediately follow non-blank, non-list lines."""
+    list_marker = re.compile(r'^(\s*)([-*+]|\d+[.)]) ')
+    lines = content.splitlines()
+    result = []
+    for i, line in enumerate(lines):
+        if i > 0 and list_marker.match(line):
+            prev = lines[i - 1]
+            if prev.strip() and not list_marker.match(prev):
+                result.append('')
+        result.append(line)
+    return '\n'.join(result)
 
 
 def markdown_to_html(content: str) -> str:
@@ -148,7 +165,8 @@ def markdown_to_html(content: str) -> str:
     Supports tables and other standard markdown features.
     Output includes newlines for inspectability.
     """
-    md = markdown.Markdown(extensions=['tables', 'fenced_code'])
+    content = _ensure_blank_line_before_lists(content)
+    md = markdown.Markdown(extensions=['tables', 'fenced_code', 'sane_lists'])
     html_output = md.convert(content)
 
     # Add newlines after block-level tags for inspectability
@@ -161,24 +179,31 @@ def markdown_to_html(content: str) -> str:
     return html_output
 
 
-def resolve_references_html(content: str, project: Project, current_doc: Document) -> str:
-    """Resolve [[REQID]] references to HTML links."""
-    def replace_ref(match):
-        req_id = match.group(1)
-        req = project.get_requirement(req_id)
-        if req:
-            # Calculate relative path
-            req_doc_path = req.file_path.parent
-            rel_path = os.path.relpath(req_doc_path, current_doc.path)
-            if rel_path == ".":
-                href = f"index.html#{req_id}"
-            else:
-                href = f"{rel_path}/index.html#{req_id}"
-            return f'<a href="{href}" class="req-link">{req_id}</a>'
-        else:
-            return f'<span class="req-link-broken">{req_id}</span>'
+def make_req_link_html(req_id: str, project: Project, current_doc: Document) -> str:
+    """Generate an HTML link for a single requirement ID."""
+    req = project.get_requirement(req_id)
+    if req:
+        req_doc_path = req.file_path.parent
+        rel_path = os.path.relpath(req_doc_path, current_doc.path)
+        href = f"index.html#{req_id}" if rel_path == "." else f"{rel_path}/index.html#{req_id}"
+        return f'<a href="{href}" class="req-link">{req_id}</a>'
+    return f'<span class="req-link-broken">{req_id}</span>'
 
-    return re.sub(r'\[\[([^\]]+)\]\]', replace_ref, content)
+
+def resolve_references_html(content: str, project: Project, current_doc: Document) -> str:
+    """Resolve [[REQID]] references to HTML links in markdown, skipping code blocks and spans."""
+    code_pattern = re.compile(r'(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`]*`)')
+    parts = code_pattern.split(content)
+
+    result = []
+    for i, part in enumerate(parts):
+        if i % 2 == 0:
+            result.append(re.sub(r'\[\[([^\]]+)\]\]',
+                                 lambda m: make_req_link_html(m.group(1), project, current_doc),
+                                 part))
+        else:
+            result.append(part)
+    return ''.join(result)
 
 
 def generate_nav_tree(project: Project, current_doc: Document = None, root_path: str = "") -> str:
@@ -241,8 +266,8 @@ def generate_requirement_html(req: Requirement, project: Project, current_doc: D
     """Generate HTML for a single requirement."""
     hidden_fields = hidden_fields or set()
     compact_hidden_fields = compact_hidden_fields or set()
-    content_html = markdown_to_html(req.content)
-    content_html = resolve_references_html(content_html, project, current_doc)
+    content_resolved = resolve_references_html(req.content, project, current_doc)
+    content_html = markdown_to_html(content_resolved)
 
     def meta_class(field_name: str) -> str:
         """Return CSS class for metadata item, including compact-hide if needed."""
@@ -274,20 +299,10 @@ def generate_requirement_html(req: Requirement, project: Project, current_doc: D
     if req.link_to or req.link_from:
         links_parts = []
         if req.link_to:
-            to_links = ", ".join(
-                f'<a href="#{tid}" class="req-link">{tid}</a>'
-                if project.get_requirement(tid) and project.get_requirement(tid).file_path.parent == current_doc.path
-                else resolve_references_html(f"[[{tid}]]", project, current_doc)
-                for tid in req.link_to
-            )
+            to_links = ", ".join(make_req_link_html(tid, project, current_doc) for tid in req.link_to)
             links_parts.append(f'<div class="links-to">Links to: {to_links}</div>')
         if req.link_from:
-            from_links = ", ".join(
-                f'<a href="#{fid}" class="req-link">{fid}</a>'
-                if project.get_requirement(fid) and project.get_requirement(fid).file_path.parent == current_doc.path
-                else resolve_references_html(f"[[{fid}]]", project, current_doc)
-                for fid in req.link_from
-            )
+            from_links = ", ".join(make_req_link_html(fid, project, current_doc) for fid in req.link_from)
             links_parts.append(f'<div class="links-from">Linked from: {from_links}</div>')
         links_html = '<div class="req-links">' + "".join(links_parts) + '</div>'
 
@@ -295,10 +310,17 @@ def generate_requirement_html(req: Requirement, project: Project, current_doc: D
     req_text = req.metadata.get("req")
     req_text_html = ""
     if req_text and "req" not in hidden_fields:
-        escaped_req = html.escape(str(req_text))
-        # Process [[references]] in the requirement text
-        escaped_req = resolve_references_html(escaped_req, project, current_doc)
-        req_text_html = f'<div class="req-statement">{escaped_req}</div>'
+        parts = re.split(r'(`[^`]*`)', str(req_text))
+        rendered_parts = []
+        for i, part in enumerate(parts):
+            if i % 2 == 1:
+                rendered_parts.append(f'<code>{html.escape(part[1:-1])}</code>')
+            else:
+                escaped = html.escape(part)
+                rendered_parts.append(re.sub(r'\[\[([^\]]+)\]\]',
+                                             lambda m: make_req_link_html(m.group(1), project, current_doc),
+                                             escaped))
+        req_text_html = f'<div class="req-statement">{"".join(rendered_parts)}</div>'
 
     # Only show rationale section if there's content
     rationale_html = ""

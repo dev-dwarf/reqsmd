@@ -160,10 +160,10 @@ def parse_requirement_file(file_path: Path) -> Requirement:
 
 
 def extract_references(content: str) -> list[str]:
-    """Extract [[REQID]] references from markdown content."""
-    pattern = r'\[\[([^\]]+)\]\]'
-    matches = re.findall(pattern, content)
-    # Return unique references preserving order
+    """Extract [[REQID]] references from markdown content, skipping code blocks and spans."""
+    code_pattern = re.compile(r'```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`]*`')
+    non_code = code_pattern.sub('', content)
+    matches = re.findall(r'\[\[([^\]]+)\]\]', non_code)
     seen = set()
     result = []
     for m in matches:

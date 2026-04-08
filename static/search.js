@@ -76,7 +76,7 @@ const COLUMN_LABELS = {
 const DERIVED_FIELDS = ['id', 'parent', 'link_to', 'link_from'];
 
 // Derived fields hidden by default
-const DEFAULT_HIDDEN_DERIVED = ['parent', 'link_to', 'link_from'];
+const DEFAULT_HIDDEN_DERIVED = ['parent', 'link_to', 'link_from', 'content'];
 
 // Filterable fields (exclude long text fields)
 const NON_FILTERABLE = ['content', 'req'];
@@ -310,8 +310,15 @@ function toggleColumnsPopup() {
 }
 
 function showError(message) {
-    const resultsDiv = document.getElementById('results');
-    resultsDiv.innerHTML = `<div class="error-message">${escapeHtml(message)}</div>`;
+    const errorDiv = document.getElementById('error-message');
+    errorDiv.textContent = message;
+    errorDiv.style.display = 'block';
+}
+
+function clearError() {
+    const errorDiv = document.getElementById('error-message');
+    errorDiv.style.display = 'none';
+    errorDiv.textContent = '';
 }
 
 function escapeHtml(text) {
@@ -361,8 +368,9 @@ function runSearch() {
         sql += ' ORDER BY id';
     }
 
+    let stmt = null;
     try {
-        const stmt = db.prepare(sql);
+        stmt = db.prepare(sql);
         stmt.bind(params);
 
         const columns = stmt.getColumnNames();
@@ -372,11 +380,13 @@ function runSearch() {
             rows.push(stmt.get());
         }
 
-        stmt.free();
+        clearError();
         currentResults = { columns, rows };
         displayCurrentResults();
     } catch (error) {
         showError(`Query error: ${error.message}`);
+    } finally {
+        if (stmt) stmt.free();
     }
 }
 
@@ -396,6 +406,7 @@ function runSQL(sqlQuery) {
         }
 
         const result = results[0];
+        clearError();
         currentResults = { columns: result.columns, rows: result.values };
         displayCurrentResults();
     } catch (error) {

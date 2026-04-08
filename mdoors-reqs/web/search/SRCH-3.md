@@ -9,4 +9,4 @@ SQL query support enables power users to:
 - Join data in custom ways
 - Export specific subsets of requirements
 
-This requires a client-side SQL engine. See [[SRCH-4]].
+This requires a client-side SQL engine. See [[SRCH-4.0]].

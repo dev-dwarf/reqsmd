@@ -274,7 +274,7 @@ body.compact-view .meta-item.compact-hide { display: none; }
 #results-table tr:nth-child(even) td { background: #f0f0f0; }
 #results-table tr:hover td { background: #ff0; }
 
-.error-message { color: #900; padding: 6px 10px; background: #fee; border: 1px solid #c00; }
+.error-message, #error-message { color: #900; padding: 6px 10px; background: #fee; border: 1px solid #c00; margin-bottom: 8px; }
 
 @media (max-width: 768px) {
     .sidebar { width: 100%; position: relative; }

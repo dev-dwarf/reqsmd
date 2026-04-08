@@ -62,10 +62,8 @@ Core:
 - [[links]] inside of code blocks should not be attempted to be resolved as links
 
 Docs:
-- less separation of requirements
-- requirement text numbered / headered by indent level, rationale below
-- button to hide all rationales and links on docs pages (compact view). Should persist across doc pages.
-- css for ctrl+p print
+- table of contents should be indented by indent level
+- each indent level should be able to be hidden (like code folding)
 
 Tree view:
 right now is shit

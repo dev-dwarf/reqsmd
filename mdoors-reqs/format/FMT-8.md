@@ -1,10 +1,11 @@
 {
-  "req": "Cross-references between requirements shall use [[REQ-ID]] syntax.",
+  "req": "Cross-references between requirements shall use `[[REQ-ID]]` syntax.",
   "priority": 1,
   "phase": "core",
 }
 ---
 The double-bracket syntax is:
+
 - Familiar to users of wiki systems
 - Easy to parse programmatically
 - Visually distinct from regular text
