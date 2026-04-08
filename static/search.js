@@ -3,18 +3,84 @@
 let db = null;
 let SQL = null;
 let allColumns = [];
+let columnOrder = []; // User-defined column order
+let defaultColumnOrder = []; // Original order for reset
 let hiddenColumns = new Set();
-let columnValues = {}; // For filter dropdowns
+let defaultHiddenColumns = new Set(); // Original hidden for reset
 let currentSort = { column: null, direction: 'asc' };
-let filters = {};
+let filters = []; // Array of {field, value} objects
+
+// LocalStorage keys
+const STORAGE_KEYS = {
+    filters: 'mdoors_search_filters',
+    hiddenColumns: 'mdoors_search_hidden',
+    columnOrder: 'mdoors_search_order',
+    sort: 'mdoors_search_sort'
+};
+
+function saveSettings() {
+    localStorage.setItem(STORAGE_KEYS.filters, JSON.stringify(filters));
+    localStorage.setItem(STORAGE_KEYS.hiddenColumns, JSON.stringify([...hiddenColumns]));
+    localStorage.setItem(STORAGE_KEYS.columnOrder, JSON.stringify(columnOrder));
+    localStorage.setItem(STORAGE_KEYS.sort, JSON.stringify(currentSort));
+}
+
+function loadSettings() {
+    try {
+        const savedFilters = localStorage.getItem(STORAGE_KEYS.filters);
+        if (savedFilters) filters = JSON.parse(savedFilters);
+
+        const savedHidden = localStorage.getItem(STORAGE_KEYS.hiddenColumns);
+        if (savedHidden) hiddenColumns = new Set(JSON.parse(savedHidden));
+
+        const savedOrder = localStorage.getItem(STORAGE_KEYS.columnOrder);
+        if (savedOrder) {
+            const order = JSON.parse(savedOrder);
+            // Only use saved order if it contains the same columns
+            if (order.length === allColumns.length && order.every(c => allColumns.includes(c))) {
+                columnOrder = order;
+            }
+        }
+
+        const savedSort = localStorage.getItem(STORAGE_KEYS.sort);
+        if (savedSort) currentSort = JSON.parse(savedSort);
+    } catch (e) {
+        console.warn('Failed to load saved settings:', e);
+    }
+}
+
+function resetSettings() {
+    filters = [];
+    hiddenColumns = new Set(defaultHiddenColumns);
+    columnOrder = [...defaultColumnOrder];
+    currentSort = { column: null, direction: 'asc' };
+    localStorage.removeItem(STORAGE_KEYS.filters);
+    localStorage.removeItem(STORAGE_KEYS.hiddenColumns);
+    localStorage.removeItem(STORAGE_KEYS.columnOrder);
+    localStorage.removeItem(STORAGE_KEYS.sort);
+    document.getElementById('search-input').value = '';
+    document.getElementById('sql-input').value = '';
+    buildColumnsUI();
+    buildFiltersUI();
+    runSearch();
+}
+
+// Column display names (content -> rationale)
+const COLUMN_LABELS = {
+    'content': 'rationale',
+    'link_to': 'links to',
+    'link_from': 'linked from'
+};
 
 // Derived fields (hardcoded) vs template fields (from config)
-const DERIVED_FIELDS = ['id', 'content', 'parent', 'link_to', 'link_from'];
+const DERIVED_FIELDS = ['id', 'parent', 'link_to', 'link_from'];
 
 // Derived fields hidden by default
-const DEFAULT_HIDDEN_DERIVED = ['link_to', 'link_from'];
+const DEFAULT_HIDDEN_DERIVED = ['parent', 'link_to', 'link_from'];
 
-// Get template fields from config
+// Filterable fields (exclude long text fields)
+const NON_FILTERABLE = ['content', 'req'];
+
 function getTemplateFields() {
     if (window.MDOORS_CONFIG && window.MDOORS_CONFIG.templateFields) {
         return window.MDOORS_CONFIG.templateFields;
@@ -22,15 +88,21 @@ function getTemplateFields() {
     return {};
 }
 
+function getColumnLabel(col) {
+    return COLUMN_LABELS[col] || col;
+}
+
+function getFilterableColumns() {
+    return allColumns.filter(col => !NON_FILTERABLE.includes(col));
+}
+
 // Initialize sql.js and load database
 async function initDatabase() {
     try {
-        // Initialize SQL.js
         SQL = await initSqlJs({
-            locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
+            locateFile: file => `vendor/${file}`
         });
 
-        // Fetch the database file
         const response = await fetch('requirements.db');
         if (!response.ok) {
             throw new Error('Failed to load requirements database');
@@ -39,31 +111,45 @@ async function initDatabase() {
         const buffer = await response.arrayBuffer();
         db = new SQL.Database(new Uint8Array(buffer));
 
-        // Build column list from derived fields + template fields
+        // Build column list: id, req first, then other template fields, then derived fields, then content/rationale
         const templateFields = getTemplateFields();
         const templateFieldNames = Object.keys(templateFields).map(k => k.replace('-', '_'));
-        allColumns = [...DERIVED_FIELDS, ...templateFieldNames];
 
-        // Add default hidden derived fields
+        const orderedColumns = ['id'];
+        if (templateFieldNames.includes('req')) {
+            orderedColumns.push('req');
+        }
+        templateFieldNames.forEach(col => {
+            if (col !== 'req' && !orderedColumns.includes(col)) {
+                orderedColumns.push(col);
+            }
+        });
+        DERIVED_FIELDS.forEach(col => {
+            if (!orderedColumns.includes(col)) {
+                orderedColumns.push(col);
+            }
+        });
+        orderedColumns.push('content');
+
+        allColumns = orderedColumns;
+        columnOrder = [...allColumns];
+        defaultColumnOrder = [...allColumns];
+
         DEFAULT_HIDDEN_DERIVED.forEach(col => hiddenColumns.add(col));
 
-        // Load hidden columns from template config
         if (window.MDOORS_CONFIG && window.MDOORS_CONFIG.hiddenColumns) {
             window.MDOORS_CONFIG.hiddenColumns.forEach(col => {
-                // Handle both original and safe column names
                 hiddenColumns.add(col);
                 hiddenColumns.add(col.replace('-', '_'));
             });
         }
+        defaultHiddenColumns = new Set(hiddenColumns);
 
-        // Collect unique values for each column (for filters)
-        collectColumnValues();
+        // Load saved settings (overrides defaults)
+        loadSettings();
 
-        // Build UI
-        buildFiltersUI();
         buildColumnsUI();
-
-        // Run initial query
+        buildFiltersUI();
         runSearch();
     } catch (error) {
         console.error('Error initializing database:', error);
@@ -71,67 +157,74 @@ async function initDatabase() {
     }
 }
 
-// Collect unique values for each column
-function collectColumnValues() {
-    allColumns.forEach(col => {
-        try {
-            const result = db.exec(`SELECT DISTINCT "${col}" FROM requirements WHERE "${col}" IS NOT NULL AND "${col}" != '' ORDER BY "${col}"`);
-            if (result.length > 0) {
-                columnValues[col] = result[0].values.map(row => row[0]);
-            } else {
-                columnValues[col] = [];
-            }
-        } catch (e) {
-            columnValues[col] = [];
-        }
-    });
-}
-
-// Build filters UI dynamically
+// Build filters UI
 function buildFiltersUI() {
     const container = document.getElementById('filters-container');
     container.innerHTML = '';
 
-    const templateFields = getTemplateFields();
-    const templateFieldNames = Object.keys(templateFields).map(k => k.replace('-', '_'));
-
-    // Filter columns: derived fields (except content) + template fields
-    const filterColumns = [
-        ...DERIVED_FIELDS.filter(c => c !== 'content'),
-        ...templateFieldNames
-    ];
-
-    filterColumns.forEach(col => {
-        const values = columnValues[col] || [];
-        if (values.length === 0 && col !== 'id') return; // Skip empty columns except id
-
-        const div = document.createElement('div');
-        div.className = 'filter-row';
-
-        const label = document.createElement('label');
-        label.textContent = col + ':';
-        label.htmlFor = `filter-${col}`;
-
-        const select = document.createElement('select');
-        select.id = `filter-${col}`;
-        select.innerHTML = '<option value="">Any</option>';
-
-        values.forEach(val => {
-            const option = document.createElement('option');
-            option.value = val;
-            option.textContent = val.length > 30 ? val.substring(0, 30) + '...' : val;
-            select.appendChild(option);
-        });
-
-        select.addEventListener('change', () => {
-            filters[col] = select.value;
-            runSearch();
-        });
-
-        div.appendChild(label);
-        div.appendChild(select);
-        container.appendChild(div);
+    filters.forEach((filter, idx) => {
+        const row = createFilterRow(idx, filter.field, filter.value);
+        container.appendChild(row);
     });
+
+    // Add "add filter" button
+    const addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.className = 'add-filter-btn';
+    addBtn.textContent = '+ Filter';
+    addBtn.addEventListener('click', () => {
+        filters.push({ field: '', value: '' });
+        saveSettings();
+        buildFiltersUI();
+    });
+    container.appendChild(addBtn);
+}
+
+function createFilterRow(idx, field, value) {
+    const row = document.createElement('div');
+    row.className = 'filter-row';
+
+    const select = document.createElement('select');
+    select.innerHTML = '<option value="">Field...</option>';
+    getFilterableColumns().forEach(col => {
+        const opt = document.createElement('option');
+        opt.value = col;
+        opt.textContent = getColumnLabel(col);
+        if (col === field) opt.selected = true;
+        select.appendChild(opt);
+    });
+    select.addEventListener('change', () => {
+        filters[idx].field = select.value;
+        saveSettings();
+    });
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Value...';
+    input.value = value || '';
+    input.addEventListener('input', () => {
+        filters[idx].value = input.value;
+        saveSettings();
+    });
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') runSearch();
+    });
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'remove-filter-btn';
+    removeBtn.textContent = '×';
+    removeBtn.addEventListener('click', () => {
+        filters.splice(idx, 1);
+        saveSettings();
+        buildFiltersUI();
+        runSearch();
+    });
+
+    row.appendChild(select);
+    row.appendChild(input);
+    row.appendChild(removeBtn);
+    return row;
 }
 
 // Build column visibility UI
@@ -139,15 +232,11 @@ function buildColumnsUI() {
     const container = document.getElementById('columns-container');
     container.innerHTML = '';
 
-    const templateFields = getTemplateFields();
-    const templateFieldNames = Object.keys(templateFields).map(k => k.replace('-', '_'));
-
-    // All columns: derived + template
-    const displayColumns = [...DERIVED_FIELDS, ...templateFieldNames];
-
-    displayColumns.forEach(col => {
+    columnOrder.forEach(col => {
         const div = document.createElement('div');
         div.className = 'column-toggle';
+        div.draggable = true;
+        div.dataset.column = col;
 
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
@@ -160,26 +249,71 @@ function buildColumnsUI() {
             } else {
                 hiddenColumns.add(col);
             }
+            saveSettings();
             displayCurrentResults();
         });
 
         const label = document.createElement('label');
         label.htmlFor = `col-${col}`;
-        label.textContent = col;
+        label.textContent = getColumnLabel(col);
 
+        const grip = document.createElement('span');
+        grip.className = 'drag-grip';
+        grip.textContent = '⋮⋮';
+
+        div.appendChild(grip);
         div.appendChild(checkbox);
         div.appendChild(label);
         container.appendChild(div);
+
+        div.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', col);
+            div.classList.add('dragging');
+        });
+        div.addEventListener('dragend', () => {
+            div.classList.remove('dragging');
+        });
+        div.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            div.classList.add('drag-over');
+        });
+        div.addEventListener('dragleave', () => {
+            div.classList.remove('drag-over');
+        });
+        div.addEventListener('drop', (e) => {
+            e.preventDefault();
+            div.classList.remove('drag-over');
+            const draggedCol = e.dataTransfer.getData('text/plain');
+            if (draggedCol !== col) {
+                reorderColumn(draggedCol, col);
+            }
+        });
     });
 }
 
-// Display error message
+function reorderColumn(draggedCol, targetCol) {
+    const draggedIdx = columnOrder.indexOf(draggedCol);
+    const targetIdx = columnOrder.indexOf(targetCol);
+    if (draggedIdx === -1 || targetIdx === -1) return;
+
+    columnOrder.splice(draggedIdx, 1);
+    columnOrder.splice(targetIdx, 0, draggedCol);
+
+    saveSettings();
+    buildColumnsUI();
+    displayCurrentResults();
+}
+
+function toggleColumnsPopup() {
+    const popup = document.getElementById('columns-popup');
+    popup.classList.toggle('visible');
+}
+
 function showError(message) {
     const resultsDiv = document.getElementById('results');
     resultsDiv.innerHTML = `<div class="error-message">${escapeHtml(message)}</div>`;
 }
 
-// Escape HTML to prevent XSS
 function escapeHtml(text) {
     if (text === null || text === undefined) return '';
     const div = document.createElement('div');
@@ -187,13 +321,18 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Store current results for re-display when columns change
 let currentResults = { columns: [], rows: [] };
 
-// Run a search query
 function runSearch() {
     if (!db) {
         showError('Database not loaded yet');
+        return;
+    }
+
+    // Check if there's a custom SQL query
+    const sqlInput = document.getElementById('sql-input').value.trim();
+    if (sqlInput) {
+        runSQL(sqlInput);
         return;
     }
 
@@ -203,15 +342,15 @@ function runSearch() {
     const params = [];
 
     if (searchText) {
-        sql += ' AND (id LIKE ? OR content LIKE ?)';
-        params.push(`%${searchText}%`, `%${searchText}%`);
+        sql += ' AND (id LIKE ? OR req LIKE ? OR content LIKE ?)';
+        params.push(`%${searchText}%`, `%${searchText}%`, `%${searchText}%`);
     }
 
     // Apply filters
-    Object.entries(filters).forEach(([col, value]) => {
-        if (value) {
-            sql += ` AND "${col}" = ?`;
-            params.push(value);
+    filters.forEach(filter => {
+        if (filter.field && filter.value) {
+            sql += ` AND "${filter.field}" LIKE ?`;
+            params.push(`%${filter.value}%`);
         }
     });
 
@@ -241,15 +380,9 @@ function runSearch() {
     }
 }
 
-// Run arbitrary SQL query
 function runSQL(sqlQuery) {
     if (!db) {
         showError('Database not loaded yet');
-        return;
-    }
-
-    if (!sqlQuery.trim()) {
-        showError('Please enter a SQL query');
         return;
     }
 
@@ -270,24 +403,32 @@ function runSQL(sqlQuery) {
     }
 }
 
-// Display results in table
 function displayCurrentResults() {
     const { columns, rows } = currentResults;
     const table = document.getElementById('results-table');
     const thead = table.querySelector('thead');
     const tbody = table.querySelector('tbody');
 
-    // Clear existing content
     thead.innerHTML = '';
     tbody.innerHTML = '';
 
-    // Filter out hidden columns
-    const visibleIndices = [];
+    // Order columns according to columnOrder, filtering hidden
     const visibleColumns = [];
-    columns.forEach((col, idx) => {
-        if (!hiddenColumns.has(col)) {
-            visibleIndices.push(idx);
+    const visibleIndices = [];
+
+    columnOrder.forEach(col => {
+        const idx = columns.indexOf(col);
+        if (idx !== -1 && !hiddenColumns.has(col)) {
             visibleColumns.push(col);
+            visibleIndices.push(idx);
+        }
+    });
+
+    // Add any columns from results not in columnOrder
+    columns.forEach((col, idx) => {
+        if (!columnOrder.includes(col) && !hiddenColumns.has(col)) {
+            visibleColumns.push(col);
+            visibleIndices.push(idx);
         }
     });
 
@@ -296,20 +437,19 @@ function displayCurrentResults() {
         return;
     }
 
-    // Build header with sort buttons
+    // Build header
     const headerRow = document.createElement('tr');
-    visibleColumns.forEach((col, visIdx) => {
+    visibleColumns.forEach((col) => {
         const th = document.createElement('th');
         th.className = 'sortable';
-        if (col === 'content') {
-            th.className += ' content-column';
+        if (col === 'content' || col === 'req') {
+            th.className += ' text-column';
         }
 
         const span = document.createElement('span');
-        span.textContent = col;
+        span.textContent = getColumnLabel(col);
         th.appendChild(span);
 
-        // Sort indicator
         if (currentSort.column === col) {
             const indicator = document.createElement('span');
             indicator.className = 'sort-indicator';
@@ -324,6 +464,7 @@ function displayCurrentResults() {
                 currentSort.column = col;
                 currentSort.direction = 'asc';
             }
+            saveSettings();
             runSearch();
         });
 
@@ -334,25 +475,23 @@ function displayCurrentResults() {
     // Build body
     rows.forEach(row => {
         const tr = document.createElement('tr');
-        visibleIndices.forEach((origIdx, visIdx) => {
+        visibleIndices.forEach((origIdx) => {
             const td = document.createElement('td');
             const colName = columns[origIdx].toLowerCase();
             const cell = row[origIdx];
 
-            if (colName === 'content') {
-                td.className = 'content-column';
+            if (colName === 'content' || colName === 'req') {
+                td.className = 'text-column';
             }
 
-            // Make ID column a link
             if (colName === 'id') {
                 const parentIdx = columns.indexOf('parent');
                 const parentPath = parentIdx >= 0 ? row[parentIdx] : '';
                 const href = parentPath ? `${parentPath}/index.html#${cell}` : `index.html#${cell}`;
                 td.innerHTML = `<a href="${escapeHtml(href)}" class="req-link">${escapeHtml(cell)}</a>`;
-            } else if (colName === 'content') {
-                // Truncate long content
+            } else if (colName === 'content' || colName === 'req') {
                 const text = String(cell || '');
-                td.textContent = text.length > 200 ? text.substring(0, 200) + '...' : text;
+                td.textContent = text.length > 150 ? text.substring(0, 150) + '...' : text;
                 td.title = text;
             } else {
                 td.textContent = cell !== null ? cell : '';
@@ -367,29 +506,25 @@ function displayCurrentResults() {
 document.addEventListener('DOMContentLoaded', () => {
     initDatabase();
 
-    // Search button
-    document.getElementById('search-btn').addEventListener('click', () => {
-        runSearch();
-    });
+    document.getElementById('search-btn').addEventListener('click', runSearch);
 
-    // Search on Enter key
     document.getElementById('search-input').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            runSearch();
-        }
+        if (e.key === 'Enter') runSearch();
     });
 
-    // SQL query button
-    document.getElementById('sql-btn').addEventListener('click', () => {
-        const sqlQuery = document.getElementById('sql-input').value;
-        runSQL(sqlQuery);
-    });
-
-    // SQL on Ctrl+Enter
     document.getElementById('sql-input').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && e.ctrlKey) {
-            const sqlQuery = document.getElementById('sql-input').value;
-            runSQL(sqlQuery);
+        if (e.key === 'Enter') runSearch();
+    });
+
+    document.getElementById('columns-toggle-btn').addEventListener('click', toggleColumnsPopup);
+
+    document.getElementById('reset-btn').addEventListener('click', resetSettings);
+
+    document.addEventListener('click', (e) => {
+        const popup = document.getElementById('columns-popup');
+        const btn = document.getElementById('columns-toggle-btn');
+        if (!popup.contains(e.target) && e.target !== btn) {
+            popup.classList.remove('visible');
         }
     });
 });

@@ -1,0 +1,32 @@
+{
+  "req": {
+    "default": null,
+    "show-search": true,
+    "show-compact": true,
+  },
+  "priority": {
+    "default": null,
+    "show-search": true,
+    "show-compact": true,
+  },
+  "phase": {
+    "default": null,
+    "show-search": true,
+    "show-compact": false,
+  },
+  "date_added": {
+    "default": null,
+    "show-search": false,
+    "show-compact": false,
+  },
+  "owner": {
+    "default": null,
+    "show-search": false,
+    "show-compact": true,
+  },
+  "author": {
+    "default": null,
+    "show-search": false,
+    "show-compact": false,
+  },
+}

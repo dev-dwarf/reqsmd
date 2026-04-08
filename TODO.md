@@ -44,3 +44,42 @@ The html is especially important, so to expand on that:
 - there should be a requirement search page where all requirements in the project can be searched through, and filtered based on metadata.
   - ideally, the user can also enter arbitrary sql queries against the requirements database.
 - as much as possible, use basic html+css+js with no libraries. The site should be very easy to deploy and run locally for development, as simple as using python http.server to host a directory.
+
+
+Active TODOs:
+
+- other fields:
+  - req
+  - date added
+  - owner
+  - author 
+
+- sidebar should have TOC for current document, and link to parent
+
+- vendor sql.js dependency so that it does not rely on cloudflare
+
+Core:
+- [[links]] inside of code blocks should not be attempted to be resolved as links
+
+Docs:
+- less separation of requirements
+- requirement text numbered / headered by indent level, rationale below
+- button to hide all rationales and links on docs pages (compact view). Should persist across doc pages.
+- css for ctrl+p print
+
+Tree view:
+right now is shit
+should show parent and child documents as well as link to and from
+should be per-requirement, not document
+obsidian graph view? maybe not a separate web page, but one big one that can start zoomed in a specific area
+  - scroll wheel moves out to a different level of detail
+  - double click on a doc goes to its page
+  
+Search:
+- order should be id then req column instead of id then rationale. rationale should not be labelled as "content" anywhere
+- drag to reorder columns
+- show hide columns should be collapsible / popup
+- filters should take up less space
+- SQL query should be a dropdown, populated with what filters already has
+
+

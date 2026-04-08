@@ -83,10 +83,18 @@ class Project:
         return defaults
 
     def get_hidden_fields(self) -> set[str]:
-        """Get set of field names marked as hidden in template."""
+        """Get set of field names not shown in search (show-search: false)."""
         hidden = set()
         for key, value in self.template.items():
-            if isinstance(value, dict) and value.get("hidden", False):
+            if isinstance(value, dict) and not value.get("show-search", True):
+                hidden.add(key)
+        return hidden
+
+    def get_compact_hidden_fields(self) -> set[str]:
+        """Get set of field names not shown in compact view (show-compact: false)."""
+        hidden = set()
+        for key, value in self.template.items():
+            if isinstance(value, dict) and not value.get("show-compact", True):
                 hidden.add(key)
         return hidden
 
