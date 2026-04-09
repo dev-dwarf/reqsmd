@@ -1,0 +1,2 @@
+[console_scripts]
+reqsmd = reqsmd.cli:main

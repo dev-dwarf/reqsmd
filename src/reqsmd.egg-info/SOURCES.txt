@@ -1,0 +1,15 @@
+LICENSE.md
+TODO.md
+pyproject.toml
+src/reqsmd/__init__.py
+src/reqsmd/cli.py
+src/reqsmd/core.py
+src/reqsmd/web.py
+src/reqsmd.egg-info/PKG-INFO
+src/reqsmd.egg-info/SOURCES.txt
+src/reqsmd.egg-info/dependency_links.txt
+src/reqsmd.egg-info/entry_points.txt
+src/reqsmd.egg-info/requires.txt
+src/reqsmd.egg-info/top_level.txt
+src/reqsmd/../../static/search.js
+src/reqsmd/../../static/style.css

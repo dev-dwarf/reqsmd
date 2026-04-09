@@ -1,4 +1,4 @@
-"""Core data models and parsing for MDOORS requirements management."""
+"""Core data models and parsing for reqsmd requirements management."""
 
 import json
 import os

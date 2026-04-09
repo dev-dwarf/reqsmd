@@ -9,4 +9,4 @@ CSV export enables:
 - Data exchange with other tools
 - Simple tabular analysis of requirements
 
-Usage: `mdoors export csv --doc $PATH`
+Usage: `reqsmd export csv --doc $PATH`

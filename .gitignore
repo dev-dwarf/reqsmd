@@ -3,17 +3,12 @@ __pycache__/
 *.py[cod]
 dist/
 build/
+*.egg-info
 
 # Virtual environment
 .venv/
 venv/
 ENV/
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
 
 # Testing
 .pytest_cache/
@@ -24,8 +19,6 @@ htmlcov/
 _site/
 *.db
 
-# OS
-.DS_Store
-Thumbs.db
+# misc
 .claude
-src/mdoors.egg-info
+.obsidian

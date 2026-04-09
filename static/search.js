@@ -1,4 +1,4 @@
-// MDOORS Search - Client-side search with sql.js
+// reqsmd Search - Client-side search with sql.js
 
 let db = null;
 let SQL = null;
@@ -12,10 +12,10 @@ let filters = []; // Array of {field, value} objects
 
 // LocalStorage keys
 const STORAGE_KEYS = {
-    filters: 'mdoors_search_filters',
-    hiddenColumns: 'mdoors_search_hidden',
-    columnOrder: 'mdoors_search_order',
-    sort: 'mdoors_search_sort'
+    filters: 'reqsmd_search_filters',
+    hiddenColumns: 'reqsmd_search_hidden',
+    columnOrder: 'reqsmd_search_order',
+    sort: 'reqsmd_search_sort'
 };
 
 function saveSettings() {
@@ -82,8 +82,8 @@ const DEFAULT_HIDDEN_DERIVED = ['parent', 'link_to', 'link_from', 'content'];
 const NON_FILTERABLE = ['content', 'req'];
 
 function getTemplateFields() {
-    if (window.MDOORS_CONFIG && window.MDOORS_CONFIG.templateFields) {
-        return window.MDOORS_CONFIG.templateFields;
+    if (window.reqsmd_CONFIG && window.reqsmd_CONFIG.templateFields) {
+        return window.reqsmd_CONFIG.templateFields;
     }
     return {};
 }
@@ -137,8 +137,8 @@ async function initDatabase() {
 
         DEFAULT_HIDDEN_DERIVED.forEach(col => hiddenColumns.add(col));
 
-        if (window.MDOORS_CONFIG && window.MDOORS_CONFIG.hiddenColumns) {
-            window.MDOORS_CONFIG.hiddenColumns.forEach(col => {
+        if (window.reqsmd_CONFIG && window.reqsmd_CONFIG.hiddenColumns) {
+            window.reqsmd_CONFIG.hiddenColumns.forEach(col => {
                 hiddenColumns.add(col);
                 hiddenColumns.add(col.replace('-', '_'));
             });

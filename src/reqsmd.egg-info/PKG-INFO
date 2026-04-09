@@ -1,5 +1,26 @@
+Metadata-Version: 2.4
+Name: reqsmd
+Version: 0.1.0
+Summary: A requirements management system using markdown files with JSON frontmatter
+License: MIT
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE.md
+Requires-Dist: markdown>=3.4
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Dynamic: license-file
 
-## REQSMD
+
+## MDOORS
 
 This project should be a systems engineering/requirements management tool, focusing on the following:
 - All requirements stored in a simple, version control friendly, textual format.
@@ -28,7 +49,7 @@ Requirements are stored in the following way:
 - any requirement can reference another using [[$REQID]] syntax. This should be captured in metadata. 
   - For example, if req-a contains [[req-b]], then req-a has a `"link-to": [ "req-b" ]` attribute and req-b has a `"link-from": [ "req-a" ]` attribute.
 
-REQSMD needs a cli that can manipulate and use the above file format:
+MDOORS needs a cli that can manipulate and use the above file format:
 - `mdoors req add $REQID` add new requirement, taking ID as input it will make a blank markdown file in the appropriate folder populated with req-template.json frontmatter
 - `mdoors export csv $DOC` export $DOC as a csv with all its child requirements and their associated metadata. $DOC is a path to a folder
 - `mdoors export sqlite $DOC` export $DOC as a sqlite database with all its child requirements and their associated metadata.

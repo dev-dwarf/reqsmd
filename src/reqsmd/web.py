@@ -1,4 +1,4 @@
-"""Web export generator for MDOORS requirements management."""
+"""Web export generator for reqsmd requirements management."""
 
 import html
 import json
@@ -20,7 +20,7 @@ BASE_TEMPLATE = """<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{title} - MDOORS</title>
+    <title>{title} - reqsmd</title>
     <link rel="stylesheet" href="{root_path}style.css">
     <script>
         if (localStorage.getItem('compactView') === 'true') {{
@@ -31,13 +31,11 @@ BASE_TEMPLATE = """<!DOCTYPE html>
 <body>
     <nav class="sidebar">
         <div class="nav-header">
-            <a href="{root_path}index.html">MDOORS</a>
+            <a href="{root_path}index.html">reqsmd</a>
+            <a href="{root_path}search.html">Search</a>
         </div>
         {parent_link}
         {toc}
-        <div class="nav-footer">
-            <a href="{root_path}search.html">Search</a>
-        </div>
     </nav>
     <main class="content">
         {content}
@@ -67,19 +65,17 @@ SEARCH_PAGE_TEMPLATE = """<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search - MDOORS</title>
+    <title>Search - reqsmd</title>
     <link rel="stylesheet" href="style.css">
     <script src="vendor/sql-wasm.js"></script>
     <script>
-        window.MDOORS_CONFIG = {config_json};
+        window.reqsmd_CONFIG = {config_json};
     </script>
 </head>
 <body>
     <nav class="sidebar">
         <div class="nav-header">
-            <a href="index.html">MDOORS</a>
-        </div>
-        <div class="nav-footer">
+            <a href="index.html">reqsmd</a>
             <a href="search.html" class="active">Search</a>
         </div>
     </nav>

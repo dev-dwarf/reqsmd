@@ -1,4 +1,4 @@
-/* MDOORS */
+/* reqsmd */
 
 :root {
     --bg: #fafafa;
@@ -98,9 +98,9 @@ a:hover { text-decoration: underline; }
     display: flex;
     align-items: baseline;
     gap: 12px;
-    margin-bottom: 4px;
+    margin: 0;
+    font-weight: 600;
 }
-.req-header h2, .req-header h3, .req-header h4 { font-weight: 600; font-size: 14px; margin: 0; }
 .req-header a { color: var(--fg); }
 
 .req-meta { display: flex; gap: 10px; }
@@ -119,8 +119,7 @@ a:hover { text-decoration: underline; }
 .req-statement { margin-bottom: 6px; }
 .req-header h3 + .req-meta ~ .req-content .req-statement,
 
-.req-rationale { margin-top: 8px; padding-left: 12px; border-left: 2px solid #ddd; font-size: 12px; color: var(--muted); }
-.req-rationale p, .req-rationale li { color: var(--muted); }
+.req-rationale { margin-top: 8px; padding-left: 12px; border-left: 2px solid var(--muted); font-size: 12px; }
 .rationale-label { display: none; }
 .rationale-content { }
 

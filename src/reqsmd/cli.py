@@ -1,4 +1,4 @@
-"""CLI entry point for MDOORS requirements management."""
+"""CLI entry point for reqsmd requirements management."""
 
 import argparse
 import csv
@@ -218,8 +218,8 @@ def cmd_export_web(args):
 def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
-        prog="mdoors",
-        description="MDOORS - Requirements management using markdown files"
+        prog="reqsmd",
+        description="reqsmd - Requirements management using markdown files"
     )
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
