@@ -5,12 +5,11 @@ import json
 import os
 import re
 import shutil
-import sqlite3
 from pathlib import Path
 
 import markdown
 
-from .core import Document, Project, Requirement, sort_key
+from .core import Document, Project, Requirement, export_sqlite, sort_key
 
 
 # HTML Templates
@@ -22,22 +21,23 @@ BASE_TEMPLATE = """<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{title} - reqsmd</title>
     <link rel="stylesheet" href="{root_path}style.css">
+    {head_extra}
     <script>
         if (localStorage.getItem('compactView') === 'true') {{
             document.documentElement.className = 'compact-view';
         }}
     </script>
 </head>
-<body>
+<body{body_attrs}>
     <nav class="sidebar">
         <div class="nav-header">
             <a href="{root_path}index.html">reqsmd</a>
-            <a href="{root_path}search.html">Search</a>
+            <a href="{root_path}search.html" class="nav-link{nav_search}">Search</a>
         </div>
         {parent_link}
         {toc}
     </nav>
-    <main class="content">
+    <main class="content{content_class}">
         {content}
     </main>
     <script>
@@ -60,27 +60,8 @@ BASE_TEMPLATE = """<!DOCTYPE html>
 </html>
 """
 
-SEARCH_PAGE_TEMPLATE = """<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search - reqsmd</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="vendor/sql-wasm.js"></script>
-    <script>
-        window.reqsmd_CONFIG = {config_json};
-    </script>
-</head>
-<body>
-    <nav class="sidebar">
-        <div class="nav-header">
-            <a href="index.html">reqsmd</a>
-            <a href="search.html" class="active">Search</a>
-        </div>
-    </nav>
-    <main class="content search-content">
-        <div class="search-controls">
+# Search page content (injected into BASE_TEMPLATE; no Python format placeholders)
+SEARCH_CONTENT = """        <div class="search-controls">
             <div class="search-row">
                 <input type="text" id="search-input" placeholder="Search requirements...">
                 <button id="search-btn">Search</button>
@@ -99,7 +80,6 @@ SEARCH_PAGE_TEMPLATE = """<!DOCTYPE html>
                 <input type="text" id="sql-input" placeholder="SQL: SELECT * FROM requirements WHERE ...">
             </div>
         </div>
-
         <div id="results">
             <div id="error-message" style="display:none"></div>
             <table id="results-table">
@@ -107,11 +87,25 @@ SEARCH_PAGE_TEMPLATE = """<!DOCTYPE html>
                 <tbody></tbody>
             </table>
         </div>
-    </main>
-    <script src="search.js"></script>
-</body>
-</html>
-"""
+        <script src="search.js"></script>"""
+
+
+def _render_page(title: str, root_path: str, content: str, *,
+                 parent_link: str = "", toc: str = "",
+                 head_extra: str = "", body_attrs: str = "",
+                 nav_active: str = "", content_class: str = "") -> str:
+    """Render a page using BASE_TEMPLATE."""
+    return BASE_TEMPLATE.format(
+        title=title,
+        root_path=root_path,
+        content=content,
+        parent_link=parent_link,
+        toc=toc,
+        head_extra=head_extra,
+        body_attrs=body_attrs,
+        nav_search=" active" if nav_active == "search" else "",
+        content_class=f" {content_class}" if content_class else "",
+    )
 
 
 def get_indent_level(req_id: str) -> int:
@@ -123,49 +117,12 @@ def get_indent_level(req_id: str) -> int:
         REQ-1.1 -> level 2
         REQ-1.1.2 -> level 3
     """
-    # Find the numeric suffix (after the last dash or the whole string if no dash)
     parts = req_id.rsplit('-', 1)
     suffix = parts[-1] if len(parts) > 1 else req_id
-    # Strip trailing .0 before counting (e.g. REQ-1.0 treated same as REQ-1)
     if suffix.endswith('.0'):
         suffix = suffix[:-2]
     dot_count = suffix.count('.')
-    return min(dot_count + 1, 3)  # Cap at level 3
-
-
-def _ensure_blank_line_before_lists(content: str) -> str:
-    """Insert blank line before list items that immediately follow non-blank, non-list lines."""
-    list_marker = re.compile(r'^(\s*)([-*+]|\d+[.)]) ')
-    lines = content.splitlines()
-    result = []
-    for i, line in enumerate(lines):
-        if i > 0 and list_marker.match(line):
-            prev = lines[i - 1]
-            if prev.strip() and not list_marker.match(prev):
-                result.append('')
-        result.append(line)
-    return '\n'.join(result)
-
-
-def markdown_to_html(content: str) -> str:
-    """
-    Convert markdown to HTML using python-markdown library.
-
-    Supports tables and other standard markdown features.
-    Output includes newlines for inspectability.
-    """
-    content = _ensure_blank_line_before_lists(content)
-    md = markdown.Markdown(extensions=['tables', 'fenced_code', 'sane_lists'])
-    html_output = md.convert(content)
-
-    # Add newlines after block-level tags for inspectability
-    block_tags = ['</p>', '</h1>', '</h2>', '</h3>', '</h4>', '</h5>', '</h6>',
-                  '</ul>', '</ol>', '</li>', '</table>', '</tr>', '</thead>',
-                  '</tbody>', '</pre>', '</blockquote>', '</div>']
-    for tag in block_tags:
-        html_output = html_output.replace(tag, tag + '\n')
-
-    return html_output
+    return min(dot_count + 1, 3)
 
 
 def make_req_link_html(req_id: str, project: Project, current_doc: Document) -> str:
@@ -179,86 +136,65 @@ def make_req_link_html(req_id: str, project: Project, current_doc: Document) -> 
     return f'<span class="req-link-broken">{req_id}</span>'
 
 
-def resolve_references_html(content: str, project: Project, current_doc: Document) -> str:
-    """Resolve [[REQID]] references to HTML links in markdown, skipping code blocks and spans."""
-    code_pattern = re.compile(r'(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`]*`)')
-    parts = code_pattern.split(content)
-
-    result = []
-    for i, part in enumerate(parts):
-        if i % 2 == 0:
-            result.append(re.sub(r'\[\[([^\]]+)\]\]',
-                                 lambda m: make_req_link_html(m.group(1), project, current_doc),
-                                 part))
-        else:
-            result.append(part)
-    return ''.join(result)
-
-
-def generate_toc(doc: Document) -> str:
-    """Generate table of contents for a document's requirements."""
-    if not doc.requirements:
-        return ""
-
-    parts = ['<div class="nav-section-header">Contents</div>', '<ul class="nav-toc">']
-    for req in doc.requirements:
-        level = get_indent_level(req.id)
-        parts.append(f'<li class="toc-level-{level}"><a href="#{html.escape(req.id)}">{html.escape(req.id)}</a></li>')
-    parts.append('</ul>')
-    return '\n'.join(parts)
-
-
-def generate_parent_link(doc: Document, project: Project, root_path: str) -> str:
-    """Generate a link to the parent document."""
-    if not doc.parent:
-        return ""
-
-    parent = doc.parent
-    parent_rel = os.path.relpath(parent.path, project.root_path)
-    if parent_rel == ".":
-        href = f"{root_path}index.html"
-    else:
-        href = f"{root_path}{parent_rel}/index.html"
-
-    return f'''<div class="nav-parent">
-        <a href="{href}">← {html.escape(parent.name)}</a>
-    </div>'''
-
-
 def generate_requirement_html(req: Requirement, project: Project, current_doc: Document,
-                              hidden_fields: set[str] = None, compact_hidden_fields: set[str] = None) -> str:
+                              hidden_fields: set[str] = None,
+                              compact_hidden_fields: set[str] = None) -> str:
     """Generate HTML for a single requirement."""
     hidden_fields = hidden_fields or set()
     compact_hidden_fields = compact_hidden_fields or set()
-    content_resolved = resolve_references_html(req.content, project, current_doc)
-    content_html = markdown_to_html(content_resolved)
+
+    # Resolve [[REQID]] references in content, skipping code blocks
+    code_pattern = re.compile(r'(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`]*`)')
+    parts = code_pattern.split(req.content)
+    resolved_parts = []
+    for i, part in enumerate(parts):
+        if i % 2 == 0:
+            resolved_parts.append(re.sub(r'\[\[([^\]]+)\]\]',
+                                         lambda m: make_req_link_html(m.group(1), project, current_doc),
+                                         part))
+        else:
+            resolved_parts.append(part)
+    content_resolved = ''.join(resolved_parts)
+
+    # Convert markdown to HTML (ensure blank line before lists first)
+    list_marker = re.compile(r'^(\s*)([-*+]|\d+[.)]) ')
+    lines = content_resolved.splitlines()
+    fixed_lines = []
+    for i, line in enumerate(lines):
+        if i > 0 and list_marker.match(line):
+            prev = lines[i - 1]
+            if prev.strip() and not list_marker.match(prev):
+                fixed_lines.append('')
+        fixed_lines.append(line)
+    md = markdown.Markdown(extensions=['tables', 'fenced_code', 'sane_lists'])
+    content_html = md.convert('\n'.join(fixed_lines))
+    block_tags = ['</p>', '</h1>', '</h2>', '</h3>', '</h4>', '</h5>', '</h6>',
+                  '</ul>', '</ol>', '</li>', '</table>', '</tr>', '</thead>',
+                  '</tbody>', '</pre>', '</blockquote>', '</div>']
+    for tag in block_tags:
+        content_html = content_html.replace(tag, tag + '\n')
 
     def meta_class(field_name: str) -> str:
-        """Return CSS class for metadata item, including compact-hide if needed."""
         if field_name in compact_hidden_fields:
             return 'meta-item compact-hide'
         return 'meta-item'
 
-    # Build metadata display (skip hidden fields)
     meta_parts = []
     if "priority" not in hidden_fields and req.priority is not None:
         meta_parts.append(f'<span class="{meta_class("priority")}">Priority: {req.priority}</span>')
     if "phase" not in hidden_fields and req.phase:
         meta_parts.append(f'<span class="{meta_class("phase")}">Phase: {req.phase}</span>')
 
-    # Show other metadata (skip hidden fields and special fields shown elsewhere)
     special_fields = {"priority", "phase", "req"}
     for key, value in req.metadata.items():
-        if key in hidden_fields:
+        if key in hidden_fields or key in special_fields:
             continue
-        if key not in special_fields:
-            if isinstance(value, list):
-                value = ", ".join(str(v) for v in value)
-            meta_parts.append(f'<span class="{meta_class(key)}">{html.escape(key)}: {html.escape(str(value))}</span>')
+        if isinstance(value, list):
+            value = ", ".join(str(v) for v in value)
+        meta_parts.append(f'<span class="{meta_class(key)}">{html.escape(key)}: {html.escape(str(value))}</span>')
 
     meta_html = " ".join(meta_parts) if meta_parts else ""
 
-    # Links
     links_html = ""
     if req.link_to or req.link_from:
         links_parts = []
@@ -270,7 +206,6 @@ def generate_requirement_html(req: Requirement, project: Project, current_doc: D
             links_parts.append(f'<div class="links-from">Linked from: {from_links}</div>')
         links_html = '<div class="req-links">' + "".join(links_parts) + '</div>'
 
-    # Show the "req" field as the main requirement statement
     req_text = req.metadata.get("req")
     req_text_html = ""
     if req_text and "req" not in hidden_fields:
@@ -286,7 +221,6 @@ def generate_requirement_html(req: Requirement, project: Project, current_doc: D
                                              escaped))
         req_text_html = f'<div class="req-statement">{"".join(rendered_parts)}</div>'
 
-    # Only show rationale section if there's content
     rationale_html = ""
     if content_html.strip():
         rationale_html = f'''
@@ -297,9 +231,8 @@ def generate_requirement_html(req: Requirement, project: Project, current_doc: D
             </div>
         </div>'''
 
-    # Determine heading level based on ID structure
     level = get_indent_level(req.id)
-    heading_tag = f"h{level + 1}"  # h2, h3, or h4
+    heading_tag = f"h{level + 1}"
 
     return f"""
     <article class="requirement" id="{html.escape(req.id)}" data-level="{level}">
@@ -317,40 +250,31 @@ def generate_requirement_html(req: Requirement, project: Project, current_doc: D
 
 
 def generate_document_page(doc: Document, project: Project, hidden_fields: set[str] = None,
-                          compact_hidden_fields: set[str] = None) -> str:
+                           compact_hidden_fields: set[str] = None) -> str:
     """Generate HTML page for a document."""
     hidden_fields = hidden_fields or set()
     compact_hidden_fields = compact_hidden_fields or set()
 
-    # Calculate root path
     rel_path = os.path.relpath(doc.path, project.root_path)
-    if rel_path == ".":
-        root_path = ""
-    else:
-        depth = rel_path.count(os.sep) + 1
-        root_path = "../" * depth
+    root_path = "" if rel_path == "." else "../" * (rel_path.count(os.sep) + 1)
 
-    # Generate requirements HTML
-    reqs_html = []
-    for req in doc.requirements:
-        reqs_html.append(generate_requirement_html(req, project, doc, hidden_fields, compact_hidden_fields))
+    reqs_html = [generate_requirement_html(req, project, doc, hidden_fields, compact_hidden_fields)
+                 for req in doc.requirements]
 
-    # Child documents links
     children_html = ""
     if doc.children:
-        children_parts = ["<section class='child-docs compact-hide'><h2>Child Documents</h2><ul>"]
+        parts = ["<section class='child-docs compact-hide'><h2>Child Documents</h2><ul>"]
         for child in doc.children:
             child_rel = os.path.relpath(child.path, doc.path)
-            children_parts.append(f'<li><a href="{child_rel}/index.html">{html.escape(child.name)}</a></li>')
-        children_parts.append("</ul></section>")
-        children_html = "\n".join(children_parts)
+            parts.append(f'<li><a href="{child_rel}/index.html">{html.escape(child.name)}</a></li>')
+        parts.append("</ul></section>")
+        children_html = "\n".join(parts)
 
     content = f"""
     <header class="doc-header">
         <h1>{html.escape(doc.name)}</h1>
         <div class="doc-controls">
             <button id="compact-toggle" class="compact-toggle">Compact</button>
-            <a href="tree.html" class="tree-link">Tree</a>
         </div>
     </header>
     {children_html}
@@ -359,86 +283,25 @@ def generate_document_page(doc: Document, project: Project, hidden_fields: set[s
     </section>
     """
 
-    # Generate TOC and parent link
-    toc = generate_toc(doc)
-    parent_link = generate_parent_link(doc, project, root_path)
+    # Table of contents
+    toc = ""
+    if doc.requirements:
+        toc_parts = ['<div class="nav-section-header">Contents</div>', '<ul class="nav-toc">']
+        for req in doc.requirements:
+            level = get_indent_level(req.id)
+            toc_parts.append(f'<li class="toc-level-{level}"><a href="#{html.escape(req.id)}">{html.escape(req.id)}</a></li>')
+        toc_parts.append('</ul>')
+        toc = '\n'.join(toc_parts)
 
-    return BASE_TEMPLATE.format(
-        title=doc.name,
-        root_path=root_path,
-        toc=toc,
-        parent_link=parent_link,
-        content=content
-    )
+    # Parent link
+    parent_link = ""
+    if doc.parent:
+        parent = doc.parent
+        parent_rel = os.path.relpath(parent.path, project.root_path)
+        href = f"{root_path}index.html" if parent_rel == "." else f"{root_path}{parent_rel}/index.html"
+        parent_link = f'<div class="nav-parent"><a href="{href}">← {html.escape(parent.name)}</a></div>'
 
-
-def generate_tree_page(doc: Document, project: Project) -> str:
-    """Generate tree view page showing requirement connections."""
-    rel_path = os.path.relpath(doc.path, project.root_path)
-    if rel_path == ".":
-        root_path = ""
-    else:
-        depth = rel_path.count(os.sep) + 1
-        root_path = "../" * depth
-
-    # Build nodes and edges for visualization
-    nodes = []
-    edges = []
-
-    for req in doc.requirements:
-        nodes.append({
-            "id": req.id,
-            "priority": req.priority,
-        })
-        for target in req.link_to:
-            edges.append({"from": req.id, "to": target})
-
-    # Simple text-based tree view
-    tree_html = ['<div class="tree-view">']
-    for req in doc.requirements:
-        tree_html.append(f'<div class="tree-node" data-id="{html.escape(req.id)}">')
-        tree_html.append(f'<span class="node-id">{html.escape(req.id)}</span>')
-
-        if req.link_to:
-            tree_html.append('<div class="node-links-to">')
-            tree_html.append('<span class="link-label">→</span>')
-            for tid in req.link_to:
-                target = project.get_requirement(tid)
-                if target:
-                    tree_html.append(resolve_references_html(f"[[{tid}]]", project, doc))
-                else:
-                    tree_html.append(f'<span class="req-link-broken">{html.escape(tid)}</span>')
-            tree_html.append('</div>')
-
-        if req.link_from:
-            tree_html.append('<div class="node-links-from">')
-            tree_html.append('<span class="link-label">←</span>')
-            for fid in req.link_from:
-                tree_html.append(resolve_references_html(f"[[{fid}]]", project, doc))
-            tree_html.append('</div>')
-
-        tree_html.append('</div>')
-    tree_html.append('</div>')
-
-    content = f"""
-    <header class="doc-header">
-        <h1>{html.escape(doc.name)} - Tree View</h1>
-        <a href="index.html" class="doc-link">Back to Document</a>
-    </header>
-    {"".join(tree_html)}
-    """
-
-    # Generate TOC and parent link
-    toc = generate_toc(doc)
-    parent_link = generate_parent_link(doc, project, root_path)
-
-    return BASE_TEMPLATE.format(
-        title=f"{doc.name} - Tree",
-        root_path=root_path,
-        toc=toc,
-        parent_link=parent_link,
-        content=content
-    )
+    return _render_page(doc.name, root_path, content, parent_link=parent_link, toc=toc)
 
 
 def generate_website(project: Project, output_path: Path):
@@ -446,7 +309,7 @@ def generate_website(project: Project, output_path: Path):
     output_path = Path(output_path)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    # Copy static assets (including subdirectories like vendor)
+    # Copy static assets
     static_dir = Path(__file__).parent.parent.parent / "static"
     if static_dir.exists():
         for asset in static_dir.iterdir():
@@ -459,109 +322,30 @@ def generate_website(project: Project, output_path: Path):
                 shutil.copytree(asset, dest_dir)
 
     # Generate SQLite database for search
-    db_path = output_path / "requirements.db"
-    generate_sqlite_db(project, db_path)
+    export_sqlite(project, output_path / "requirements.db")
 
-    # Build config for search page
     hidden_fields = project.get_hidden_fields()
     compact_hidden_fields = project.get_compact_hidden_fields()
 
-    # Build template fields config
     template_fields = {}
     for key, value in project.template.items():
-        if isinstance(value, dict):
-            template_fields[key] = {
-                "show-search": value.get("show-search", True),
-            }
-        else:
-            # Legacy format
-            template_fields[key] = {"show-search": True}
+        template_fields[key] = {"show-search": value.get("show-search", True) if isinstance(value, dict) else True}
 
-    config = {
-        "hiddenColumns": list(hidden_fields),
-        "templateFields": template_fields,
-    }
-
-    # Generate search page
-    search_html = SEARCH_PAGE_TEMPLATE.format(
-        config_json=json.dumps(config)
+    config = {"hiddenColumns": list(hidden_fields), "templateFields": template_fields}
+    search_head = (
+        '<script src="vendor/sql-wasm.js"></script>\n    '
+        f'<script>window.reqsmd_CONFIG = {json.dumps(config)};</script>'
     )
-    (output_path / "search.html").write_text(search_html, encoding="utf-8")
+    (output_path / "search.html").write_text(
+        _render_page("Search", "", SEARCH_CONTENT,
+                     head_extra=search_head, nav_active="search",
+                     content_class="search-content"),
+        encoding="utf-8"
+    )
 
-    # Generate document pages
     for doc in project.all_documents():
         rel_path = os.path.relpath(doc.path, project.root_path)
-        if rel_path == ".":
-            doc_output = output_path
-        else:
-            doc_output = output_path / rel_path
+        doc_output = output_path if rel_path == "." else output_path / rel_path
         doc_output.mkdir(parents=True, exist_ok=True)
-
-        # Document page
         doc_html = generate_document_page(doc, project, hidden_fields, compact_hidden_fields)
         (doc_output / "index.html").write_text(doc_html, encoding="utf-8")
-
-        # Tree page
-        tree_html = generate_tree_page(doc, project)
-        (doc_output / "tree.html").write_text(tree_html, encoding="utf-8")
-
-
-def generate_sqlite_db(project: Project, output_path: Path):
-    """Generate SQLite database for web search."""
-    reqs = project.all_requirements()
-
-    if output_path.exists():
-        output_path.unlink()
-
-    conn = sqlite3.connect(str(output_path))
-    cursor = conn.cursor()
-
-    # Collect all metadata keys from requirements AND template
-    all_keys = set()
-    for req in reqs:
-        all_keys.update(req.metadata.keys())
-    # Also include all template fields so columns exist even if unused
-    all_keys.update(project.template.keys())
-    meta_columns = sorted(all_keys)
-    safe_columns = {k: k.replace("-", "_") for k in meta_columns}
-
-    # Create table
-    columns_sql = ", ".join(f'"{safe_columns[k]}" TEXT' for k in meta_columns)
-    create_sql = f"""
-    CREATE TABLE requirements (
-        id TEXT PRIMARY KEY,
-        content TEXT,
-        link_to TEXT,
-        link_from TEXT,
-        parent TEXT
-        {', ' + columns_sql if columns_sql else ''}
-    )
-    """
-    cursor.execute(create_sql)
-
-    # Insert requirements
-    for req in reqs:
-        parent_path = os.path.relpath(req.file_path.parent, project.root_path)
-        values = {
-            "id": req.id,
-            "content": req.content,
-            "link_to": ";".join(req.link_to),
-            "link_from": ";".join(req.link_from),
-            "parent": parent_path if parent_path != "." else "",
-        }
-        for key in meta_columns:
-            value = req.metadata.get(key)
-            if isinstance(value, list):
-                values[safe_columns[key]] = ";".join(str(v) for v in value)
-            elif value is not None:
-                values[safe_columns[key]] = str(value)
-            else:
-                values[safe_columns[key]] = None
-
-        columns = ", ".join(f'"{k}"' for k in values.keys())
-        placeholders = ", ".join("?" for _ in values)
-        insert_sql = f"INSERT INTO requirements ({columns}) VALUES ({placeholders})"
-        cursor.execute(insert_sql, list(values.values()))
-
-    conn.commit()
-    conn.close()

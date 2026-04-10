@@ -3,6 +3,7 @@
 import json
 import os
 import re
+import sqlite3
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -246,6 +247,64 @@ def load_project(root_path: str | Path) -> Project:
         template=template,
         _req_index=req_index,
     )
+
+
+def export_sqlite(project: Project, output_path: Path | str) -> int:
+    """Export all requirements to a SQLite database. Returns count of requirements written."""
+    output_path = Path(output_path)
+    reqs = project.all_requirements()
+
+    if output_path.exists():
+        output_path.unlink()
+
+    conn = sqlite3.connect(str(output_path))
+    cursor = conn.cursor()
+
+    # Collect metadata keys from requirements AND template so columns exist even if unused
+    all_keys: set[str] = set()
+    for req in reqs:
+        all_keys.update(req.metadata.keys())
+    all_keys.update(project.template.keys())
+    meta_columns = sorted(all_keys)
+    safe_columns = {k: k.replace("-", "_") for k in meta_columns}
+
+    columns_sql = ", ".join(f'"{safe_columns[k]}" TEXT' for k in meta_columns)
+    cursor.execute(f"""
+        CREATE TABLE requirements (
+            id TEXT PRIMARY KEY,
+            content TEXT,
+            link_to TEXT,
+            link_from TEXT,
+            parent TEXT
+            {', ' + columns_sql if columns_sql else ''}
+        )
+    """)
+
+    for req in reqs:
+        parent_path = os.path.relpath(req.file_path.parent, project.root_path)
+        values: dict[str, Any] = {
+            "id": req.id,
+            "content": req.content,
+            "link_to": ";".join(req.link_to),
+            "link_from": ";".join(req.link_from),
+            "parent": "" if parent_path == "." else parent_path,
+        }
+        for key in meta_columns:
+            value = req.metadata.get(key)
+            if isinstance(value, list):
+                values[safe_columns[key]] = ";".join(str(v) for v in value)
+            elif value is not None:
+                values[safe_columns[key]] = str(value)
+            else:
+                values[safe_columns[key]] = None
+
+        cols = ", ".join(f'"{k}"' for k in values)
+        placeholders = ", ".join("?" for _ in values)
+        cursor.execute(f"INSERT INTO requirements ({cols}) VALUES ({placeholders})", list(values.values()))
+
+    conn.commit()
+    conn.close()
+    return len(reqs)
 
 
 def resolve_references(content: str, project: Project, current_doc_path: Path = None) -> str:

@@ -34,6 +34,8 @@ a:hover { text-decoration: underline; }
 
 .nav-header { padding: 10px; border-bottom: 1px solid #333; }
 .nav-header a { color: var(--bg); font-weight: 700; font-size: 15px; }
+.nav-header .nav-link { font-size: 12px; font-weight: 400; color: #666; }
+.nav-header .nav-link:hover, .nav-header .nav-link.active { color: var(--bg); text-decoration: none; }
 
 .nav-tree, .nav-tree ul { list-style: none; }
 .nav-tree ul { padding-left: 10px; }
@@ -75,7 +77,7 @@ a:hover { text-decoration: underline; }
 
 .doc-controls { display: flex; gap: 6px; align-items: center; }
 
-.tree-link, .doc-link, .compact-toggle {
+.compact-toggle {
     font-size: 11px;
     color: var(--fg);
     border: 1px solid var(--fg);
@@ -85,7 +87,7 @@ a:hover { text-decoration: underline; }
     cursor: pointer;
     font-family: var(--mono);
 }
-.tree-link:hover, .doc-link:hover, .compact-toggle:hover { background: var(--fg); color: var(--bg); text-decoration: none; }
+.compact-toggle:hover { background: var(--fg); color: var(--bg); }
 .compact-toggle.active { background: var(--fg); color: var(--bg); }
 
 /* Requirements */
@@ -111,17 +113,15 @@ a:hover { text-decoration: underline; }
 .req-content p:last-child { margin-bottom: 0; }
 .req-content h1, .req-content h2, .req-content h3 { font-size: 14px; margin: 10px 0 4px; text-transform: uppercase; }
 .req-content ul { margin: 4px 0; padding-left: 14px; }
-.req-content code { background: #ff0; padding: 0 3px; font-size: 12px; }
+.req-content code { background: #fffff7; padding: 0 3px; font-size: 12px; }
 .req-content table { border-collapse: collapse; font-size: 12px; margin: 6px 0; }
 .req-content th, .req-content td { border: 1px solid var(--fg); padding: 3px 6px; }
 .req-content th { background: var(--fg); color: var(--bg); text-transform: uppercase; }
 
 .req-statement { margin-bottom: 6px; }
-.req-header h3 + .req-meta ~ .req-content .req-statement,
 
 .req-rationale { margin-top: 8px; padding-left: 12px; border-left: 2px solid var(--muted); font-size: 12px; }
 .rationale-label { display: none; }
-.rationale-content { }
 
 .req-links { margin-top: 6px; font-size: 11px; color: var(--muted); }
 .req-links a { font-size: 11px; }
@@ -139,13 +139,6 @@ body.compact-view .compact-hide { display: none; }
 .child-docs h2 { font-size: 11px; text-transform: uppercase; margin-bottom: 6px; }
 .child-docs ul { list-style: none; }
 .child-docs li::before { content: "→ "; color: var(--muted); }
-
-/* Tree view */
-.tree-view { display: flex; flex-direction: column; gap: 6px; }
-.tree-node { border: 1px solid var(--fg); padding: 6px 10px; }
-.node-id { font-weight: 600; font-size: 13px; }
-.node-links-to, .node-links-from { font-size: 11px; display: flex; gap: 6px; align-items: center; }
-.link-label { color: var(--muted); font-weight: 600; }
 
 /* Search */
 .search-controls { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
@@ -276,7 +269,6 @@ body.compact-view .compact-hide { display: none; }
 @media (max-width: 768px) {
     .sidebar { width: 100%; position: relative; }
     .content, .search-content { margin-left: 0; width: 100%; padding: 12px; }
-    .search-controls { grid-template-columns: 1fr; }
 }
 
 /* Print styles */

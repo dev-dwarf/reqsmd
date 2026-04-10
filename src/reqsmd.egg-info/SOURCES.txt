@@ -11,5 +11,6 @@ src/reqsmd.egg-info/dependency_links.txt
 src/reqsmd.egg-info/entry_points.txt
 src/reqsmd.egg-info/requires.txt
 src/reqsmd.egg-info/top_level.txt
+src/reqsmd/../../static/graph.js
 src/reqsmd/../../static/search.js
 src/reqsmd/../../static/style.css

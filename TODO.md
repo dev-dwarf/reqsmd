@@ -29,10 +29,10 @@ Requirements are stored in the following way:
   - For example, if req-a contains [[req-b]], then req-a has a `"link-to": [ "req-b" ]` attribute and req-b has a `"link-from": [ "req-a" ]` attribute.
 
 REQSMD needs a cli that can manipulate and use the above file format:
-- `mdoors req add $REQID` add new requirement, taking ID as input it will make a blank markdown file in the appropriate folder populated with req-template.json frontmatter
-- `mdoors export csv $DOC` export $DOC as a csv with all its child requirements and their associated metadata. $DOC is a path to a folder
-- `mdoors export sqlite $DOC` export $DOC as a sqlite database with all its child requirements and their associated metadata.
-- 'mdoors export web' export a static website generated from the requirements, where each document is a single html page.
+- `reqsmd req add $REQID` add new requirement, taking ID as input it will make a blank markdown file in the appropriate folder populated with req-template.json frontmatter
+- `reqsmd export csv $DOC` export $DOC as a csv with all its child requirements and their associated metadata. $DOC is a path to a folder
+- `reqsmd export sqlite $DOC` export $DOC as a sqlite database with all its child requirements and their associated metadata.
+- 'reqsmd export web' export a static website generated from the requirements, where each document is a single html page.
 
 All of the above cli functionality should be a built on a shared core library that ingests and regularizees the markdown files into
 python datastructures that can be worked with very easily to implement the requested functionality.
@@ -48,12 +48,15 @@ The html is especially important, so to expand on that:
 
 Active TODOs:
 
-Tree view:
-right now is shit
-should show parent and child documents as well as link to and from
-should be per-requirement, not document
-obsidian graph view? maybe not a separate web page, but one big one that can start zoomed in a specific area
-  - scroll wheel moves out to a different level of detail
-  - double click on a doc goes to its page
-  
+- Requirement verification and traceability
+- 3 new cli commands:
+  - reqsmd req verify $REQID $USER # hashes requirement, marks as verified by $USER
+  - reqsmd req check $REQID # check hash of requirement matches verified hash
+  - reqsmd check # equivalent to reqsmd req check but for all reqs, should print out a list of failing REQIDs
+
+- these commands together work like the "compile" step for requirements that make sure connections between 
+  different requirements are maintained as they update. the requirement hashes should be based on a customizeable set of defaults,
+  but always include the full text of req, and the hash of any linked-to requirements.
+  The check tool must be implemented efficiently to allow a large repository of requirements to be checked quickly.
+
 
