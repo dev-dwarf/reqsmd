@@ -1,5 +1,6 @@
 """Core data models and parsing for reqsmd requirements management."""
 
+import hashlib
 import json
 import os
 import re
@@ -305,6 +306,57 @@ def export_sqlite(project: Project, output_path: Path | str) -> int:
     conn.commit()
     conn.close()
     return len(reqs)
+
+
+_VERIFY_SYSTEM_FIELDS = {"verified-hash", "verified-by"}
+
+
+def get_hash_fields(project: Project) -> list[str]:
+    """Return sorted list of metadata fields (beyond 'req') to include in requirement hash."""
+    return sorted(
+        key for key, value in project.template.items()
+        if isinstance(value, dict) and value.get("hash-include", False)
+        and key not in _VERIFY_SYSTEM_FIELDS
+    )
+
+
+def compute_req_hash(req: Requirement, stored_hashes: dict[str, str],
+                     hash_fields: list[str]) -> str:
+    """Compute a deterministic SHA-256 hash for a requirement.
+
+    Always includes the 'req' field. Also includes fields listed in hash_fields
+    and the stored verification hashes of each linked-to requirement.
+    """
+    parts = [f"req:{req.metadata.get('req') or ''}"]
+
+    for field_name in hash_fields:
+        value = req.metadata.get(field_name)
+        if value is None:
+            value = ""
+        elif isinstance(value, list):
+            value = ";".join(str(v) for v in value)
+        else:
+            value = str(value)
+        parts.append(f"{field_name}:{value}")
+
+    for dep_id in sorted(req.link_to):
+        parts.append(f"dep:{dep_id}:{stored_hashes.get(dep_id, '')}")
+
+    return hashlib.sha256("\n".join(parts).encode()).hexdigest()
+
+
+def write_requirement_metadata(req: Requirement) -> None:
+    """Rewrite the JSON frontmatter of a requirement file, preserving markdown content."""
+    if not req.file_path:
+        raise ValueError(f"Requirement {req.id} has no file path")
+    lines = ["{"]
+    for key, value in req.metadata.items():
+        lines.append(f'  "{key}": {json.dumps(value)},')
+    lines.append("}")
+    body = "\n".join(lines) + "\n---\n"
+    if req.content:
+        body += req.content + "\n"
+    req.file_path.write_text(body, encoding="utf-8")
 
 
 def resolve_references(content: str, project: Project, current_doc_path: Path = None) -> str:

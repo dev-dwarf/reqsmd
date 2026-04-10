@@ -44,15 +44,68 @@ my-project/
 
 ```json
 {
-  "req": { "default": "", "show-search": true },
-  "priority": { "default": null, "show-compact": false },
-  "phase": { "default": "" }
+  "req":      { "default": "", "show-search": true, "hash-include": true },
+  "priority": { "default": null, "show-compact": false, "hash-include": true },
+  "phase":    { "default": "" }
 }
 ```
 
 - `default` — value pre-filled when creating a new requirement
 - `show-search` — whether the field appears as a column in the search UI (default: true)
 - `show-compact` — whether the field appears in compact view (default: true)
+- `hash-include` — whether the field is included in the verification hash (default: false); `req` is always included regardless
+
+## Verification
+
+reqsmd can hash requirements and detect changes — a "compile step" that ensures traceability links remain valid as requirements evolve.
+
+Each requirement's hash covers its `req` statement, any `hash-include` fields, and the stored verification hashes of all linked-to requirements. This means that if a dependency changes and is re-verified, all requirements that depend on it will fail their check until they are re-verified as well.
+
+```
+reqsmd req verify REQ-ID USER [--force] [--doc PATH]
+```
+Compute and store a verification hash for a requirement, recording who verified it. Fails if any linked-to requirements are not yet verified — they must be verified first to produce a stable hash. Use `--force` to recursively verify all unverified dependencies before verifying the target.
+
+```
+reqsmd req check REQ-ID [--doc PATH]
+```
+Check whether a requirement matches its stored verification hash. Exits non-zero if the requirement has changed or has never been verified.
+
+```
+reqsmd check [--doc PATH]
+```
+Check all requirements in the project. Prints a line per failing requirement (`FAIL`) or never-verified requirement (`UNVERIFIED`). Exits non-zero if any fail. Designed to run efficiently on large repositories — all hashes are computed in a single O(n) pass using a snapshot of stored dependency hashes.
+
+**Example workflow:**
+
+```
+# Verify a leaf requirement (no dependencies)
+reqsmd req verify SYS-1 alice
+
+# Verify a requirement with unverified dependencies — fails:
+reqsmd req verify SYS-2 alice
+# Error: unverified dependencies: SYS-1
+# Use --force to verify dependencies recursively.
+
+# Use --force to verify the whole chain at once:
+reqsmd req verify SYS-2 alice --force
+
+# Check the entire project:
+reqsmd check
+# OK (42 requirements verified)
+
+# After modifying SYS-1:
+reqsmd check
+# FAIL SYS-1          ← content changed since last verification
+# FAIL SYS-2          ← dependency SYS-1 was re-verified, hash changed
+
+# Re-verify the chain:
+reqsmd req verify SYS-2 alice --force
+reqsmd check
+# OK (42 requirements verified)
+```
+
+The verification fields (`verified-hash`, `verified-by`) are stored in the requirement frontmatter alongside other metadata and commit naturally to version control. Add them to `req-template.json` with `"show-search": false` to hide them from the search UI.
 
 ## CLI
 
@@ -62,12 +115,12 @@ reqsmd req add REQ-ID [--doc PATH]
 Create a new requirement file pre-populated with template defaults.
 
 ```
-reqsmd export csv PATH [--output FILE]
+reqsmd export csv [--doc PATH] [--output FILE]
 ```
 Export all requirements in a document tree to CSV. Outputs to stdout if `--output` is omitted.
 
 ```
-reqsmd export sqlite PATH [--output FILE]
+reqsmd export sqlite [--doc PATH] [--output FILE]
 ```
 Export all requirements to a SQLite database (`requirements` table with columns for all metadata fields).
 

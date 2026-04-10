@@ -3,30 +3,48 @@
     "default": null,
     "show-search": true,
     "show-compact": true,
+    "hash-include": true,
   },
   "priority": {
     "default": null,
     "show-search": true,
     "show-compact": true,
+    "hash-include": true,
   },
   "phase": {
     "default": null,
     "show-search": true,
     "show-compact": false,
+    "hash-include": false,
   },
   "date_added": {
     "default": null,
     "show-search": false,
     "show-compact": false,
+    "hash-include": false,
   },
   "owner": {
     "default": null,
     "show-search": false,
     "show-compact": true,
+    "hash-include": false,
   },
   "author": {
     "default": null,
     "show-search": false,
     "show-compact": false,
+    "hash-include": false,
+  },
+  "verified-hash": {
+    "default": null,
+    "show-search": false,
+    "show-compact": false,
+    "hash-include": false,
+  },
+  "verified-by": {
+    "default": null,
+    "show-search": false,
+    "show-compact": false,
+    "hash-include": false,
   },
 }

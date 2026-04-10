@@ -2,6 +2,8 @@
   "req": "Each document shall have its own HTML page.",
   "priority": 1,
   "phase": "web",
+  "verified-hash": "0b7596d9c1bd0d593a1c739e0bceca26a10a1785dbb295ee230a2c8c3d82aeb7",
+  "verified-by": "alice",
 }
 ---
 One page per document:
