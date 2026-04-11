@@ -261,6 +261,10 @@ def export_sqlite(project: Project, output_path: Path | str) -> int:
     conn = sqlite3.connect(str(output_path))
     cursor = conn.cursor()
 
+    # Compute verification status for all requirements up front
+    hash_fields = get_hash_fields(project)
+    stored_hashes = get_stored_hashes(project)
+
     # Collect metadata keys from requirements AND template so columns exist even if unused
     all_keys: set[str] = set()
     for req in reqs:
@@ -274,21 +278,39 @@ def export_sqlite(project: Project, output_path: Path | str) -> int:
         CREATE TABLE requirements (
             id TEXT PRIMARY KEY,
             content TEXT,
-            link_to TEXT,
-            link_from TEXT,
-            parent TEXT
+            parent TEXT,
+            verified_status TEXT
             {', ' + columns_sql if columns_sql else ''}
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE links (
+            source TEXT NOT NULL,
+            target TEXT NOT NULL,
+            PRIMARY KEY (source, target),
+            FOREIGN KEY (source) REFERENCES requirements(id)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE template (
+            field TEXT PRIMARY KEY,
+            default_value TEXT,
+            show_search INTEGER,
+            show_compact INTEGER,
+            hash_include INTEGER
         )
     """)
 
     for req in reqs:
         parent_path = os.path.relpath(req.file_path.parent, project.root_path)
+        status = req_verification_status(req, stored_hashes, hash_fields)
         values: dict[str, Any] = {
             "id": req.id,
             "content": req.content,
-            "link_to": ";".join(req.link_to),
-            "link_from": ";".join(req.link_from),
             "parent": "" if parent_path == "." else parent_path,
+            "verified_status": status,
         }
         for key in meta_columns:
             value = req.metadata.get(key)
@@ -303,12 +325,37 @@ def export_sqlite(project: Project, output_path: Path | str) -> int:
         placeholders = ", ".join("?" for _ in values)
         cursor.execute(f"INSERT INTO requirements ({cols}) VALUES ({placeholders})", list(values.values()))
 
+        for target_id in req.link_to:
+            cursor.execute("INSERT OR IGNORE INTO links (source, target) VALUES (?, ?)",
+                           (req.id, target_id))
+
+    for field_name, field_config in project.template.items():
+        if not isinstance(field_config, dict):
+            continue
+        default = field_config.get("default")
+        cursor.execute(
+            "INSERT INTO template (field, default_value, show_search, show_compact, hash_include) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (
+                field_name,
+                json.dumps(default) if default is not None else None,
+                int(field_config.get("show-search", True)),
+                int(field_config.get("show-compact", True)),
+                int(field_config.get("hash-include", False)),
+            ),
+        )
+
     conn.commit()
     conn.close()
     return len(reqs)
 
 
 _VERIFY_SYSTEM_FIELDS = {"verified-hash", "verified-by"}
+
+
+def get_stored_hashes(project: Project) -> dict[str, str]:
+    """Build a snapshot of stored verification hashes for all requirements."""
+    return {r.id: r.metadata.get("verified-hash", "") for r in project.all_requirements()}
 
 
 def get_hash_fields(project: Project) -> list[str]:
@@ -348,6 +395,71 @@ def compute_req_hash(req: Requirement, stored_hashes: dict[str, str],
         parts.append(f"dep:{dep_id}:{stored_hashes.get(dep_id, '')}")
 
     return hashlib.sha256("\n".join(parts).encode()).hexdigest()
+
+
+def req_verification_status(req: Requirement, stored_hashes: dict[str, str],
+                             hash_fields: list[str]) -> str:
+    """Return 'OK', 'FAIL', or 'UNVERIFIED' for a requirement."""
+    stored_hash = stored_hashes.get(req.id, "")
+    if not stored_hash:
+        return "UNVERIFIED"
+    if compute_req_hash(req, stored_hashes, hash_fields) == stored_hash:
+        return "OK"
+    return "FAIL"
+
+
+def verify_requirement(req: Requirement, project: Project, user: str,
+                        hash_fields: list[str], stored_hashes: dict[str, str],
+                        force: bool = False, on_verify=None,
+                        _visiting: set = None, _verified: set = None) -> bool:
+    """Recursively verify a requirement and write updated metadata to disk.
+
+    Returns False if a dependency is unverified and force is not set.
+    Raises ValueError on circular dependencies.
+    Updates stored_hashes in place as requirements are verified.
+    on_verify, if provided, is called as on_verify(req_id, user, hash) after each verification.
+    """
+    if _visiting is None:
+        _visiting = set()
+    if _verified is None:
+        _verified = set()
+
+    if req.id in _verified and not force:
+        return True
+    if req.id in _visiting:
+        path = " -> ".join(_visiting) + f" -> {req.id}"
+        raise ValueError(f"Circular dependency: {path}")
+
+    _visiting.add(req.id)
+
+    unverified_deps = [d for d in req.link_to if not stored_hashes.get(d)]
+    if unverified_deps and not force:
+        _visiting.discard(req.id)
+        return False
+
+    for dep_id in req.link_to:
+        dep = project.get_requirement(dep_id)
+        if dep is None:
+            continue  # broken link
+        if not force and stored_hashes.get(dep_id):
+            continue  # already verified and not forcing re-verify
+        if not verify_requirement(dep, project, user, hash_fields, stored_hashes,
+                                  force=force, on_verify=on_verify,
+                                  _visiting=_visiting, _verified=_verified):
+            _visiting.discard(req.id)
+            return False
+
+    req_hash = compute_req_hash(req, stored_hashes, hash_fields)
+    req.metadata["verified-hash"] = req_hash
+    req.metadata["verified-by"] = user
+    write_requirement_metadata(req)
+    stored_hashes[req.id] = req_hash
+
+    _visiting.discard(req.id)
+    _verified.add(req.id)
+    if on_verify:
+        on_verify(req.id, user, req_hash)
+    return True
 
 
 def write_requirement_metadata(req: Requirement) -> None:

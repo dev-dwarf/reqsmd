@@ -2,12 +2,11 @@
 
 import argparse
 import csv
-import json
 import sys
 from pathlib import Path
 
-from .core import (compute_req_hash, export_sqlite, get_hash_fields,
-                   load_project, parse_lenient_json, write_requirement_metadata)
+from .core import (export_sqlite, get_hash_fields, get_stored_hashes,
+                   load_project, req_verification_status, verify_requirement)
 
 def cmd_export_csv(args):
     """Export requirements to CSV."""
@@ -65,43 +64,6 @@ def cmd_export_sqlite(args):
     return 0
 
 
-def _do_verify(req, project, user, hash_fields, stored_hashes, force, visiting, verified):
-    """Recursively verify a requirement. Raises on cycles. Returns False if dep unverified."""
-    if req.id in verified and not force:
-        return True
-    if req.id in visiting:
-        path = " -> ".join(visiting) + f" -> {req.id}"
-        raise ValueError(f"Circular dependency: {path}")
-
-    visiting.add(req.id)
-
-    unverified_deps = [d for d in req.link_to if not stored_hashes.get(d)]
-    if unverified_deps and not force:
-        visiting.discard(req.id)
-        return False
-
-    for dep_id in req.link_to:
-        dep = project.get_requirement(dep_id)
-        if dep is None:
-            continue  # broken link
-        if not force and stored_hashes.get(dep_id):
-            continue  # already verified and not forcing re-verify
-        if not _do_verify(dep, project, user, hash_fields, stored_hashes, force, visiting, verified):
-            visiting.discard(req.id)
-            return False
-
-    req_hash = compute_req_hash(req, stored_hashes, hash_fields)
-    req.metadata["verified-hash"] = req_hash
-    req.metadata["verified-by"] = user
-    write_requirement_metadata(req)
-    stored_hashes[req.id] = req_hash
-
-    visiting.discard(req.id)
-    verified.add(req.id)
-    print(f"Verified {req.id} by {user} (hash: {req_hash[:16]}...)")
-    return True
-
-
 def cmd_req_verify(args):
     """Hash a requirement and mark it as verified."""
     doc_path = Path(args.doc) if args.doc else Path(".")
@@ -112,11 +74,14 @@ def cmd_req_verify(args):
         return 1
 
     hash_fields = get_hash_fields(project)
-    stored_hashes = {r.id: r.metadata.get("verified-hash", "") for r in project.all_requirements()}
+    stored_hashes = get_stored_hashes(project)
+
+    def on_verify(req_id, user, req_hash):
+        print(f"Verified {req_id} by {user} (hash: {req_hash[:16]}...)")
 
     try:
-        ok = _do_verify(req, project, args.user, hash_fields, stored_hashes,
-                        force=args.force, visiting=set(), verified=set())
+        ok = verify_requirement(req, project, args.user, hash_fields, stored_hashes,
+                                force=args.force, on_verify=on_verify)
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
@@ -138,20 +103,11 @@ def cmd_req_check(args):
         print(f"Error: Requirement {args.req_id} not found", file=sys.stderr)
         return 1
 
-    stored_hash = req.metadata.get("verified-hash")
-    if not stored_hash:
-        print(f"UNVERIFIED {args.req_id}")
-        return 1
-
     hash_fields = get_hash_fields(project)
-    stored_hashes = {r.id: r.metadata.get("verified-hash", "") for r in project.all_requirements()}
-    computed = compute_req_hash(req, stored_hashes, hash_fields)
-
-    if computed == stored_hash:
-        print(f"OK {args.req_id}")
-        return 0
-    print(f"FAIL {args.req_id}")
-    return 1
+    stored_hashes = get_stored_hashes(project)
+    status = req_verification_status(req, stored_hashes, hash_fields)
+    print(f"{status} {args.req_id}")
+    return 0 if status == "OK" else 1
 
 
 def cmd_check(args):
@@ -161,16 +117,13 @@ def cmd_check(args):
     all_reqs = project.all_requirements()
 
     hash_fields = get_hash_fields(project)
-    # Build stored-hash map once; all hash computations use this snapshot
-    stored_hashes = {r.id: r.metadata.get("verified-hash", "") for r in all_reqs}
+    stored_hashes = get_stored_hashes(project)
 
     failing = []
     for req in all_reqs:
-        stored_hash = stored_hashes[req.id]
-        if not stored_hash:
-            failing.append((req.id, "UNVERIFIED"))
-        elif compute_req_hash(req, stored_hashes, hash_fields) != stored_hash:
-            failing.append((req.id, "FAIL"))
+        status = req_verification_status(req, stored_hashes, hash_fields)
+        if status != "OK":
+            failing.append((req.id, status))
 
     if failing:
         for req_id, status in failing:
