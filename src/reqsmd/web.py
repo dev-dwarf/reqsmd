@@ -5,6 +5,7 @@ import json
 import os
 import re
 import shutil
+import time
 from pathlib import Path
 
 import markdown
@@ -330,8 +331,11 @@ def generate_website(project: Project, output_path: Path):
     template_fields = {}
     for key, value in project.template.items():
         template_fields[key] = {"show-search": value.get("show-search", True) if isinstance(value, dict) else True}
-
-    config = {"hiddenColumns": list(hidden_fields), "templateFields": template_fields}
+    config = {
+        "hiddenColumns": list(hidden_fields),
+        "templateFields": template_fields,
+        "dbVersion": int(time.time()),
+    }
     search_head = (
         '<script src="vendor/sql-wasm.js"></script>\n    '
         f'<script>window.reqsmd_CONFIG = {json.dumps(config)};</script>'

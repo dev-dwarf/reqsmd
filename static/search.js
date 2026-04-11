@@ -77,20 +77,23 @@ async function initDatabase() {
     try {
         SQL = await initSqlJs({ locateFile: file => `vendor/${file}` });
 
-        const response = await fetch('requirements.db');
+        const dbVersion = window.reqsmd_CONFIG && window.reqsmd_CONFIG.dbVersion;
+        const dbUrl = dbVersion ? `requirements.db?v=${dbVersion}` : 'requirements.db';
+        const response = await fetch(dbUrl);
         if (!response.ok) throw new Error('Failed to load requirements database');
 
         db = new SQL.Database(new Uint8Array(await response.arrayBuffer()));
 
         const templateFields = (window.reqsmd_CONFIG && window.reqsmd_CONFIG.templateFields)
             ? window.reqsmd_CONFIG.templateFields : {};
-        const templateFieldNames = Object.keys(templateFields).map(k => k.replace('-', '_'));
+        const templateFieldNames = Object.keys(templateFields).map(k => k.replace(/-/g, '_'));
 
         const orderedColumns = ['id'];
         if (templateFieldNames.includes('req')) orderedColumns.push('req');
         templateFieldNames.forEach(col => {
             if (col !== 'req' && !orderedColumns.includes(col)) orderedColumns.push(col);
         });
+        orderedColumns.push('verified_status');
         DERIVED_FIELDS.forEach(col => {
             if (!orderedColumns.includes(col)) orderedColumns.push(col);
         });
@@ -101,10 +104,11 @@ async function initDatabase() {
         defaultColumnOrder = [...allColumns];
 
         DEFAULT_HIDDEN_DERIVED.forEach(col => hiddenColumns.add(col));
+        hiddenColumns.add('verified_status');
         if (window.reqsmd_CONFIG && window.reqsmd_CONFIG.hiddenColumns) {
             window.reqsmd_CONFIG.hiddenColumns.forEach(col => {
                 hiddenColumns.add(col);
-                hiddenColumns.add(col.replace('-', '_'));
+                hiddenColumns.add(col.replace(/-/g, '_'));
             });
         }
         defaultHiddenColumns = new Set(hiddenColumns);
@@ -136,7 +140,7 @@ async function initDatabase() {
         runSearch();
     } catch (error) {
         console.error('Error initializing database:', error);
-        showError('Failed to load requirements database. Make sure requirements.db exists.');
+        showError(`Failed to initialize search: ${error.message}`);
     }
 }
 

@@ -278,6 +278,8 @@ def export_sqlite(project: Project, output_path: Path | str) -> int:
         CREATE TABLE requirements (
             id TEXT PRIMARY KEY,
             content TEXT,
+            link_to TEXT,
+            link_from TEXT,
             parent TEXT,
             verified_status TEXT
             {', ' + columns_sql if columns_sql else ''}
@@ -309,6 +311,8 @@ def export_sqlite(project: Project, output_path: Path | str) -> int:
         values: dict[str, Any] = {
             "id": req.id,
             "content": req.content,
+            "link_to": ";".join(req.link_to),
+            "link_from": ";".join(req.link_from),
             "parent": "" if parent_path == "." else parent_path,
             "verified_status": status,
         }
