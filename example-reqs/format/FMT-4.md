@@ -3,7 +3,7 @@
   "priority": 1,
   "phase": "core",
   "verified-hash": "b2e8196fc8a845a25bcfc10762c188f31fd8acf2670a1e1cd8529d0e15b7be68",
-  "verified-by": "alice",
+  "verified-by": "bob",
 }
 ---
 Markdown is:

@@ -2,7 +2,7 @@
   "req": "The verification hash shall cover the req field, any hash-include template fields, and the stored verification hashes of all linked-to requirements.",
   "priority": 1,
   "phase": "core",
-  "verified-hash": "edac473d4ef4566f3c228cded0273116c358760d19a44b7ad79cabd5290d3016",
+  "verified-hash": "5917f560a2c16d77c588dec179284a288528f9ee8f1d21405900109fcde22a40",
   "verified-by": "bob",
 }
 ---

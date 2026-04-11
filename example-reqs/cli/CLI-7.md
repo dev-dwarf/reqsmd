@@ -3,7 +3,7 @@
   "priority": 1,
   "phase": "cli",
   "verified-by": "bob",
-  "verified-hash": "47abf6bc74fd0b1e85264fb909424bc8dcb2a5e3c13ea79753ddf7e63fcba9ba",
+  "verified-hash": "80a7e6c26ace9746f57662810e69d6da82b62dfb672cb66f8ca0098e25b6890d",
 }
 ---
 Outputs one of:

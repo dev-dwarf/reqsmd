@@ -3,7 +3,7 @@
   "priority": 1,
   "phase": "web",
   "verified-hash": "8f6dbf60a6add36f275ed0cda6923dc908d7a8d2f33ba8615fc478ea81bbeec3",
-  "verified-by": "alice",
+  "verified-by": "bob",
 }
 ---
 One page per document:

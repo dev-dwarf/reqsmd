@@ -3,7 +3,7 @@
   "priority": 1,
   "phase": "export",
   "verified-hash": "c18bb80038746d4bbc6549b6c188c7cbfd2f91ccb05aa03977e8a29807ed8825",
-  "verified-by": "alice",
+  "verified-by": "bob",
 }
 ---
 A static website allows:

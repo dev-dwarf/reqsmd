@@ -2,7 +2,7 @@
   "req": "Verification shall require all linked-to requirements to be verified before the dependent requirement can be verified.",
   "priority": 1,
   "phase": "core",
-  "verified-hash": "f1fae65df0ec90d65e6e28279030a403d1867bee56f4fe7be54233fe92cfd46f",
+  "verified-hash": "4362eb62eaefd4e61c3590a85a60c94d7abf49388e38623728df8a52ad9aed40",
   "verified-by": "bob",
 }
 ---
