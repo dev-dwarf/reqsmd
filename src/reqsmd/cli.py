@@ -8,139 +8,6 @@ from pathlib import Path
 from .core import (export_sqlite, get_hash_fields, get_stored_hashes,
                    load_project, req_verification_status, verify_requirement)
 
-def cmd_export_csv(args):
-    """Export requirements to CSV."""
-    doc_path = Path(args.doc)
-    output = args.output
-
-    project = load_project(doc_path)
-    reqs = project.all_requirements()
-
-    if not reqs:
-        print("No requirements found.", file=sys.stderr)
-        return 1
-
-    all_keys: set[str] = set()
-    for req in reqs:
-        all_keys.update(req.metadata.keys())
-
-    columns = ["id", "content", "link_to", "link_from"] + sorted(all_keys)
-
-    outfile = open(output, "w", newline="", encoding="utf-8") if output else sys.stdout
-    try:
-        writer = csv.DictWriter(outfile, fieldnames=columns, extrasaction="ignore")
-        writer.writeheader()
-        for req in reqs:
-            row = {
-                "id": req.id,
-                "content": req.content,
-                "link_to": ";".join(req.link_to),
-                "link_from": ";".join(req.link_from),
-            }
-            for key, value in req.metadata.items():
-                row[key] = ";".join(str(v) for v in value) if isinstance(value, list) else value
-            writer.writerow(row)
-    finally:
-        if output:
-            outfile.close()
-
-    if output:
-        print(f"Exported {len(reqs)} requirements to {output}")
-    return 0
-
-
-def cmd_export_sqlite(args):
-    """Export requirements to SQLite database."""
-    doc_path = Path(args.doc)
-    output = args.output or "requirements.db"
-
-    project = load_project(doc_path)
-    if not project.all_requirements():
-        print("No requirements found.", file=sys.stderr)
-        return 1
-
-    count = export_sqlite(project, output)
-    print(f"Exported {count} requirements to {output}")
-    return 0
-
-
-def cmd_req_verify(args):
-    """Hash a requirement and mark it as verified."""
-    doc_path = Path(args.doc) if args.doc else Path(".")
-    project = load_project(doc_path)
-    req = project.get_requirement(args.req_id)
-    if not req:
-        print(f"Error: Requirement {args.req_id} not found", file=sys.stderr)
-        return 1
-
-    hash_fields = get_hash_fields(project)
-    stored_hashes = get_stored_hashes(project)
-
-    def on_verify(req_id, user, req_hash):
-        print(f"Verified {req_id} by {user} (hash: {req_hash[:16]}...)")
-
-    try:
-        ok = verify_requirement(req, project, args.user, hash_fields, stored_hashes,
-                                force=args.force, on_verify=on_verify)
-    except ValueError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        return 1
-
-    if not ok:
-        unverified = [d for d in req.link_to if not stored_hashes.get(d)]
-        print(f"Error: unverified dependencies: {', '.join(unverified)}", file=sys.stderr)
-        print("Use --force to verify dependencies recursively.", file=sys.stderr)
-        return 1
-    return 0
-
-
-def cmd_req_check(args):
-    """Check whether a requirement matches its stored verification hash."""
-    doc_path = Path(args.doc) if args.doc else Path(".")
-    project = load_project(doc_path)
-    req = project.get_requirement(args.req_id)
-    if not req:
-        print(f"Error: Requirement {args.req_id} not found", file=sys.stderr)
-        return 1
-
-    hash_fields = get_hash_fields(project)
-    stored_hashes = get_stored_hashes(project)
-    status = req_verification_status(req, stored_hashes, hash_fields)
-    print(f"{status} {args.req_id}")
-    return 0 if status == "OK" else 1
-
-
-def cmd_check(args):
-    """Check all requirements and report any that have changed since verification."""
-    doc_path = Path(args.doc) if args.doc else Path(".")
-    project = load_project(doc_path)
-    all_reqs = project.all_requirements()
-
-    hash_fields = get_hash_fields(project)
-    stored_hashes = get_stored_hashes(project)
-
-    failing = []
-    for req in all_reqs:
-        status = req_verification_status(req, stored_hashes, hash_fields)
-        if status != "OK":
-            failing.append((req.id, status))
-
-    if failing:
-        for req_id, status in failing:
-            print(f"{status} {req_id}")
-        return 1
-    print(f"OK ({len(all_reqs)} requirements verified)")
-    return 0
-
-
-def cmd_export_web(args):
-    """Export requirements to a static website."""
-    from .web import generate_website
-    project = load_project(Path(args.doc) if args.doc else Path("."))
-    generate_website(project, Path(args.output) if args.output else Path("_site"))
-    print(f"Generated website in {args.output or '_site'}/")
-    return 0
-
 
 def main():
     """Main CLI entry point."""
@@ -186,25 +53,109 @@ def main():
 
     if args.command == "req":
         if args.req_command == "verify":
-            return cmd_req_verify(args)
+            project = load_project(Path(args.doc))
+            req = project.get_requirement(args.req_id)
+            if not req:
+                print(f"Error: Requirement {args.req_id} not found", file=sys.stderr)
+                return 1
+            hash_fields = get_hash_fields(project)
+            stored_hashes = get_stored_hashes(project)
+            try:
+                ok = verify_requirement(
+                    req, project, args.user, hash_fields, stored_hashes,
+                    force=args.force,
+                    on_verify=lambda rid, user, h: print(f"Verified {rid} by {user} (hash: {h[:16]}...)"),
+                )
+            except ValueError as e:
+                print(f"Error: {e}", file=sys.stderr)
+                return 1
+            if not ok:
+                unverified = [d for d in req.link_to if not stored_hashes.get(d)]
+                print(f"Error: unverified dependencies: {', '.join(unverified)}", file=sys.stderr)
+                print("Use --force to verify dependencies recursively.", file=sys.stderr)
+                return 1
+            return 0
+
         elif args.req_command == "check":
-            return cmd_req_check(args)
+            project = load_project(Path(args.doc))
+            req = project.get_requirement(args.req_id)
+            if not req:
+                print(f"Error: Requirement {args.req_id} not found", file=sys.stderr)
+                return 1
+            status = req_verification_status(req, get_stored_hashes(project), get_hash_fields(project))
+            print(f"{status} {args.req_id}")
+            return 0 if status == "OK" else 1
+
         req_parser.print_help()
         return 1
+
     elif args.command == "check":
-        return cmd_check(args)
+        project = load_project(Path(args.doc))
+        all_reqs = project.all_requirements()
+        stored_hashes = get_stored_hashes(project)
+        hash_fields = get_hash_fields(project)
+        failing = [(req.id, s) for req in all_reqs
+                   if (s := req_verification_status(req, stored_hashes, hash_fields)) != "OK"]
+        if failing:
+            for req_id, status in failing:
+                print(f"{status} {req_id}")
+            return 1
+        print(f"OK ({len(all_reqs)} requirements verified)")
+        return 0
+
     elif args.command == "export":
         if args.export_command == "csv":
-            return cmd_export_csv(args)
+            project = load_project(Path(args.doc))
+            reqs = project.all_requirements()
+            if not reqs:
+                print("No requirements found.", file=sys.stderr)
+                return 1
+            all_keys: set[str] = set()
+            for req in reqs:
+                all_keys.update(req.metadata.keys())
+            columns = ["id", "content", "link_to", "link_from"] + sorted(all_keys)
+            outfile = open(args.output, "w", newline="", encoding="utf-8") if args.output else sys.stdout
+            try:
+                writer = csv.DictWriter(outfile, fieldnames=columns, extrasaction="ignore")
+                writer.writeheader()
+                for req in reqs:
+                    row = {
+                        "id": req.id,
+                        "content": req.content,
+                        "link_to": ";".join(req.link_to),
+                        "link_from": ";".join(req.link_from),
+                    }
+                    for key, value in req.metadata.items():
+                        row[key] = ";".join(str(v) for v in value) if isinstance(value, list) else value
+                    writer.writerow(row)
+            finally:
+                if args.output:
+                    outfile.close()
+            if args.output:
+                print(f"Exported {len(reqs)} requirements to {args.output}")
+            return 0
+
         elif args.export_command == "sqlite":
-            return cmd_export_sqlite(args)
+            project = load_project(Path(args.doc))
+            if not project.all_requirements():
+                print("No requirements found.", file=sys.stderr)
+                return 1
+            count = export_sqlite(project, args.output)
+            print(f"Exported {count} requirements to {args.output}")
+            return 0
+
         elif args.export_command == "web":
-            return cmd_export_web(args)
+            from .web import generate_website
+            project = load_project(Path(args.doc))
+            generate_website(project, Path(args.output))
+            print(f"Generated website in {args.output}/")
+            return 0
+
         export_parser.print_help()
         return 1
-    else:
-        parser.print_help()
-        return 1
+
+    parser.print_help()
+    return 1
 
 
 if __name__ == "__main__":
