@@ -2,7 +2,7 @@
   "req": "Requirements in the same folder shall form a single document.",
   "priority": 2,
   "phase": "core",
-  "verified-hash": "ff4c09171fe93224a9a3cb4d144cd46946a52f17d6bd739b16c135ad8526c96a",
+  "verified-hash": "11abc5924d0cbe0d89466793135235cd3f397db6cdc1925a03b46197fc0223a3",
   "verified-by": "alice",
 }
 ---

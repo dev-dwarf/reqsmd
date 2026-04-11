@@ -2,7 +2,7 @@
   "req": "The website shall use only basic HTML, CSS, and JavaScript with no framework dependencies.",
   "priority": 2,
   "phase": "web",
-  "verified-hash": "254d37e3cb36ff4bb59627908a1c15a94146bcc912d2f344105e36d81205899c",
+  "verified-hash": "9eff2f57c3d308a7198cd369fb4ca2aafeb97ed390de5064ac2313150ef79c91",
   "verified-by": "alice",
 }
 ---

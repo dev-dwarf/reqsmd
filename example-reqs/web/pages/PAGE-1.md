@@ -2,7 +2,7 @@
   "req": "Each document shall have its own HTML page.",
   "priority": 1,
   "phase": "web",
-  "verified-hash": "0b7596d9c1bd0d593a1c739e0bceca26a10a1785dbb295ee230a2c8c3d82aeb7",
+  "verified-hash": "8f6dbf60a6add36f275ed0cda6923dc908d7a8d2f33ba8615fc478ea81bbeec3",
   "verified-by": "alice",
 }
 ---

@@ -2,7 +2,7 @@
   "req": "MDOORS shall maintain bidirectional link tracking between requirements.",
   "priority": 1,
   "phase": "core",
-  "verified-hash": "590f0ccfdc6bd7baee2f8d26d45eacc80afe74bb03d07053e22c8135239abca2",
+  "verified-hash": "6bf7e223cead5ed45257a39f3a63f1ef9deef3dc6622a44d47b7497dbd48169a",
   "verified-by": "alice",
 }
 ---

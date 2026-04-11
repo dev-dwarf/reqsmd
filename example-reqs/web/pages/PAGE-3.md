@@ -2,7 +2,7 @@
   "req": "Each document shall have an associated tree view page.",
   "priority": 2,
   "phase": "web",
-  "verified-hash": "72382279f94af056def51262564776d711c9067d1fbe7e2f10df6e29c970f081",
+  "verified-hash": "7b939fd2ba911efeeb5dd31a4d4d962635f13f106bf3428fe26e39bce696c21c",
   "verified-by": "alice",
 }
 ---

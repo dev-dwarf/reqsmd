@@ -29,7 +29,6 @@ Requirements are stored in the following way:
   - For example, if req-a contains [[req-b]], then req-a has a `"link-to": [ "req-b" ]` attribute and req-b has a `"link-from": [ "req-a" ]` attribute.
 
 REQSMD needs a cli that can manipulate and use the above file format:
-- `reqsmd req add $REQID` add new requirement, taking ID as input it will make a blank markdown file in the appropriate folder populated with req-template.json frontmatter
 - `reqsmd export csv $DOC` export $DOC as a csv with all its child requirements and their associated metadata. $DOC is a path to a folder
 - `reqsmd export sqlite $DOC` export $DOC as a sqlite database with all its child requirements and their associated metadata.
 - 'reqsmd export web' export a static website generated from the requirements, where each document is a single html page.
@@ -55,8 +54,10 @@ Active TODOs:
   - reqsmd check # equivalent to reqsmd req check but for all reqs, should print out a list of failing REQIDs
 
 - these commands together work like the "compile" step for requirements that make sure connections between 
-  different requirements are maintained as they update. the requirement hashes should be based on a customizeable set of defaults,
+  different requirements are maintained as they update. the requirement hashes should be based on a customizeable set of attributes configured in req-template.json,
   but always include the full text of req, and the hash of any linked-to requirements.
   The check tool must be implemented efficiently to allow a large repository of requirements to be checked quickly.
+
+  When finished with the code, update the example-reqs and README.md to include this functionality.
 
 

@@ -2,7 +2,7 @@
   "req": "Search results shall be displayed in a sortable table.",
   "priority": 2,
   "phase": "web",
-  "verified-hash": "b68e7617148a21c48bfa91f32337eed0e003bf301022c6ea644972bad53a2b75",
+  "verified-hash": "eb738acdfcc691c48f034f92983b54ce93e843c97b8e195b563585382fa97c9f",
   "verified-by": "alice",
 }
 ---

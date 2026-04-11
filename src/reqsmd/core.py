@@ -312,11 +312,16 @@ _VERIFY_SYSTEM_FIELDS = {"verified-hash", "verified-by"}
 
 
 def get_hash_fields(project: Project) -> list[str]:
-    """Return sorted list of metadata fields (beyond 'req') to include in requirement hash."""
+    """Return sorted list of metadata fields (beyond 'req') to include in requirement hash.
+
+    'req' is always included in the hash regardless of hash-include, so it is excluded here
+    to avoid double-counting.
+    """
     return sorted(
         key for key, value in project.template.items()
         if isinstance(value, dict) and value.get("hash-include", False)
         and key not in _VERIFY_SYSTEM_FIELDS
+        and key != "req"
     )
 
 

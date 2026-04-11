@@ -105,15 +105,11 @@ reqsmd check
 # OK (42 requirements verified)
 ```
 
-The verification fields (`verified-hash`, `verified-by`) are stored in the requirement frontmatter alongside other metadata and commit naturally to version control. Add them to `req-template.json` with `"show-search": false` to hide them from the search UI.
+The verification fields (`verified-hash`, `verified-by`) are stored in the requirement frontmatter and commit naturally to version control. Add them to `req-template.json` with `"show-search": false` to hide them from the search UI.
+
+Circular dependencies are detected and reported as errors during `--force` traversal. Avoid mutual cross-references between requirements — links should flow in one direction (e.g., higher-level requirements linking to the lower-level ones that implement them).
 
 ## CLI
-
-```
-reqsmd req add REQ-ID [--doc PATH]
-```
-Create a new requirement file pre-populated with template defaults.
-
 ```
 reqsmd export csv [--doc PATH] [--output FILE]
 ```

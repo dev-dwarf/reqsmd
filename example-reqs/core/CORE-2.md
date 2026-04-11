@@ -2,7 +2,7 @@
   "req": "MDOORS shall use minimal external dependencies.",
   "priority": 2,
   "phase": "core",
-  "verified-hash": "0b765180e6d47f2166790cdf396f24b697bb7650b2c028eee609de9209ab52ca",
+  "verified-hash": "85c28047b732cd4919fe32cc3c4ca92ed1f95db4670925a7b2677169c86260bf",
   "verified-by": "alice",
 }
 ---

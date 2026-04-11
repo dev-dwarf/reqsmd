@@ -2,7 +2,7 @@
   "req": "The sidebar shall include a link to the parent document.",
   "priority": 2,
   "phase": "web",
-  "verified-hash": "dff5caa79148759365f549737e635a03e7bc6e1a83b4ec5849a52ce4450e9681",
+  "verified-hash": "192ce8102058321f0dc092bfb692c4e0712bdbe2a443ccd747f195c643ec91ef",
   "verified-by": "alice",
 }
 ---

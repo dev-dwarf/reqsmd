@@ -2,7 +2,7 @@
   "req": "Cross-reference links shall be rendered as clickable hyperlinks.",
   "priority": 1,
   "phase": "web",
-  "verified-hash": "5be0c3729f025b82cd518ef3728deb8020705bc130f9485e732b05b068e53ee4",
+  "verified-hash": "14697cc68fe4ac1fa062544da54d48f6c80b75948b3fe82d627c80a0e181380f",
   "verified-by": "alice",
 }
 ---

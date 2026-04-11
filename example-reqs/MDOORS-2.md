@@ -2,7 +2,7 @@
   "req": "MDOORS shall store all requirements in plain text files.",
   "priority": 1,
   "phase": "core",
-  "verified-hash": "f5ad09a3b99fbd14940b45faba6cc77bc309e355486f7243b1a669843e077300",
+  "verified-hash": "a3b97165af5be4b1e9ae3e774555812f432e7be0736dbe60574a3dad5312859d",
   "verified-by": "alice",
 }
 ---

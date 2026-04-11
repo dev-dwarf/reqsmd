@@ -2,7 +2,7 @@
   "req": "Cross-references between requirements shall use `[[REQ-ID]]` syntax.",
   "priority": 1,
   "phase": "core",
-  "verified-hash": "67983332c24b009330c13ed65b90c43f0914d4b692df345c6e6dec396937f0e3",
+  "verified-hash": "8dc7101f8a62092ea190e776ff5f1bf0c6421124854c23a66632df515d9479bd",
   "verified-by": "alice",
 }
 ---

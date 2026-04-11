@@ -1,14 +1,24 @@
 {
-  "req": "The CLI shall support adding new requirements via `reqsmd req add`.",
+  "req": "The CLI shall provide a `reqsmd check` command to check all requirements in the project in a single pass.",
   "priority": 1,
-  "phase": "core",
-  "verified-hash": "b69bdaadda141239882f20e618890f3c94bed09d253694010b729c8bbea44923",
-  "verified-by": "alice",
+  "phase": "cli",
+  "verified-hash": "4049633eb7d1dc99dae442839f1e1ef0b8156e252e03127a919dd5cf3fc6e350",
+  "verified-by": "bob",
 }
 ---
-Adding requirements through the CLI ensures:
-- Consistent file structure and formatting
-- Automatic population of template fields (see [[FMT-9]])
-- Correct placement in the document hierarchy
+The command checks all requirements efficiently by building a single snapshot of stored dependency hashes, then computing each requirement's current hash against that snapshot. This is O(n) in the number of requirements.
 
-Usage: `reqsmd req add $REQID`
+Output lists one line per failing requirement, then exits non-zero if any fail:
+
+```
+UNVERIFIED VER-1
+FAIL CORE-3
+```
+
+Or on success:
+
+```
+OK (41 requirements verified)
+```
+
+Intended for use in CI pipelines as a gating check. See [[CLI-7]].

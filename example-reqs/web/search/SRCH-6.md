@@ -2,7 +2,7 @@
   "req": "Users shall be able to show/hide columns in search results.",
   "priority": 3,
   "phase": "web",
-  "verified-hash": "8fe18fa774620e195e77fa7558f21fa3c72f2433dc03e41ab9a6041975baa33a",
+  "verified-hash": "99e92eaca0ced821b49add617f0cda3af498f76f4e617b042d310ab1a07e1ce1",
   "verified-by": "alice",
 }
 ---

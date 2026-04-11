@@ -2,7 +2,7 @@
   "req": "Generated HTML shall include newlines for human readability.",
   "priority": 3,
   "phase": "web",
-  "verified-hash": "488ad733e9e5b3266421315365003e59f19c2a19f03aecb40899d4eff7033875",
+  "verified-hash": "4e44867f4f2c30bc4ba91df8fd61105816d44ebc51d6f86639ebb509e69f9b60",
   "verified-by": "alice",
 }
 ---

@@ -2,7 +2,7 @@
   "req": "The website shall include a navigation sidebar showing the document tree.",
   "priority": 1,
   "phase": "web",
-  "verified-hash": "7028465cb480b3d27650654d0231959f2517c4d4b2a52f223f75cf9c8fa5976d",
+  "verified-hash": "2cef7e95cce3894543849d4251b24d165fb0c46092be86b7e1ecadfe1f98622e",
   "verified-by": "alice",
 }
 ---

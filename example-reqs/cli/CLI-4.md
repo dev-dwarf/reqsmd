@@ -2,7 +2,7 @@
   "req": "The CLI shall support exporting to SQLite database format.",
   "priority": 2,
   "phase": "export",
-  "verified-hash": "42b3f31b8eb1b7ee08e7b1accdc89980514c00863b73c8f5dba0ed41b0ed3b2d",
+  "verified-hash": "d0d589ecbcc958efdb63d9dc59e72b30682ac5ed980fec70ffa5d0fcef53d86d",
   "verified-by": "alice",
 }
 ---

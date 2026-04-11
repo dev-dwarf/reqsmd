@@ -2,7 +2,7 @@
   "req": "Requirement content shall be written in Markdown format.",
   "priority": 1,
   "phase": "core",
-  "verified-hash": "8b8b682f05708fa5dcf9e1e17a0246ffbabf6e652bdb391046ce45b62176ce0f",
+  "verified-hash": "b2e8196fc8a845a25bcfc10762c188f31fd8acf2670a1e1cd8529d0e15b7be68",
   "verified-by": "alice",
 }
 ---

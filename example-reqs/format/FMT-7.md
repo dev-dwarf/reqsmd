@@ -2,7 +2,7 @@
   "req": "Subdirectories shall represent child documents of their parent.",
   "priority": 2,
   "phase": "core",
-  "verified-hash": "9a4897e58853c5e2344499a3ed57ce4fe9bd6b6b413c3b14c541556d78b542ff",
+  "verified-hash": "d433a2e732e5db139eaece16baa609d380f9df2bdf692ea4d6b18a01912b6c02",
   "verified-by": "alice",
 }
 ---

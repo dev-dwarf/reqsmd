@@ -9,54 +9,6 @@ from pathlib import Path
 from .core import (compute_req_hash, export_sqlite, get_hash_fields,
                    load_project, parse_lenient_json, write_requirement_metadata)
 
-
-def cmd_req_add(args):
-    """Add a new requirement."""
-    req_id = args.req_id
-    doc_path = Path(args.doc) if args.doc else Path(".")
-
-    # Find project root by walking up for req-template.json
-    current = doc_path.resolve()
-    project_root = current
-    while current != current.parent:
-        if (current / "req-template.json").exists():
-            project_root = current
-            break
-        current = current.parent
-
-    template_path = project_root / "req-template.json"
-    if template_path.exists():
-        try:
-            template = parse_lenient_json(template_path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, IOError):
-            template = {}
-    else:
-        template = {}
-
-    defaults = {}
-    for key, value in template.items():
-        if isinstance(value, dict) and "default" in value:
-            defaults[key] = value["default"]
-        else:
-            defaults[key] = value
-
-    req_file = doc_path / f"{req_id}.md"
-    if req_file.exists():
-        print(f"Error: Requirement {req_id} already exists at {req_file}", file=sys.stderr)
-        return 1
-
-    doc_path.mkdir(parents=True, exist_ok=True)
-
-    json_lines = ["{"]
-    for key, value in defaults.items():
-        json_lines.append(f'  "{key}": {json.dumps(value)},')
-    json_lines.append("}")
-
-    req_file.write_text("\n".join(json_lines) + "\n---\n", encoding="utf-8")
-    print(f"Created {req_file}")
-    return 0
-
-
 def cmd_export_csv(args):
     """Export requirements to CSV."""
     doc_path = Path(args.doc)
@@ -246,10 +198,6 @@ def main():
     req_parser = subparsers.add_parser("req", help="Requirement operations")
     req_subparsers = req_parser.add_subparsers(dest="req_command")
 
-    req_add_parser = req_subparsers.add_parser("add", help="Add a new requirement")
-    req_add_parser.add_argument("req_id", help="Requirement ID (e.g., PRES-02)")
-    req_add_parser.add_argument("--doc", "-d", help="Document folder path", default=".")
-
     req_verify_parser = req_subparsers.add_parser("verify", help="Verify a requirement")
     req_verify_parser.add_argument("req_id", help="Requirement ID")
     req_verify_parser.add_argument("user", help="Username of verifier")
@@ -282,9 +230,7 @@ def main():
     args = parser.parse_args()
 
     if args.command == "req":
-        if args.req_command == "add":
-            return cmd_req_add(args)
-        elif args.req_command == "verify":
+        if args.req_command == "verify":
             return cmd_req_verify(args)
         elif args.req_command == "check":
             return cmd_req_check(args)

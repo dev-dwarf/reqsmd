@@ -2,7 +2,7 @@
   "req": "MDOORS shall generate a static HTML website from requirements.",
   "priority": 1,
   "phase": "web",
-  "verified-hash": "fb769f9d91def88f4f2e225c21379ef0b03d36641caca09295bd2fe08ad8aed8",
+  "verified-hash": "a7d7e9233a206479dc681125f9b06a47b1e201d3ed4e016baa4af992691bc932",
   "verified-by": "alice",
 }
 ---

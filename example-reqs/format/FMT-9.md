@@ -2,7 +2,7 @@
   "req": "The root folder shall contain a req-template.json file defining default fields.",
   "priority": 2,
   "phase": "core",
-  "verified-hash": "1d2cb9c9e96a77fd8ec6632c30aaf1ddf99ed97ebe9ddec62ed48e3ccda9d184",
+  "verified-hash": "67e541cce214dac929c86fd69091595f4cda21f41e7cea5174fe2056e9a1690e",
   "verified-by": "alice",
 }
 ---

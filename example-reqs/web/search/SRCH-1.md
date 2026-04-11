@@ -2,7 +2,7 @@
   "req": "The website shall include a searchable requirements database.",
   "priority": 1,
   "phase": "web",
-  "verified-hash": "430aed9d3fd8decacd3c963dc434798b466f6b4aba2d1a8616306984cefdc4b2",
+  "verified-hash": "cd08808135b6134e25a6ddfca755362876fbb5a6511ad2974d30655f3b0b605d",
   "verified-by": "alice",
 }
 ---
