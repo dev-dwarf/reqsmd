@@ -3,6 +3,7 @@
   "priority": 2,
   "verified-hash": "85c28047b732cd4919fe32cc3c4ca92ed1f95db4670925a7b2677169c86260bf",
   "verified-by": "alice",
+  "date_added": "2026-April-07",
 }
 ---
 Minimizing dependencies:

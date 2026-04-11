@@ -3,6 +3,7 @@
   "priority": 2,
   "verified-hash": "efb5b04c9988e6fb2110a98f0d7337b945734c983c94e3fc8ca116a7486e08f5",
   "verified-by": "alice",
+  "date_added": "2026-April-07",
 }
 ---
 CSV export enables:

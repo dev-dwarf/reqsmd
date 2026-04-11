@@ -3,6 +3,7 @@
   "priority": 1,
   "verified-hash": "8af33b0c17a014faded28245d5ff4de78061abcb6a504fd500f0c49aeb1e2ceb",
   "verified-by": "alice",
+  "date_added": "2026-April-07",
 }
 ---
 One file per requirement enables:

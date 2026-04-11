@@ -3,6 +3,7 @@
   "priority": 2,
   "verified-hash": "7b939fd2ba911efeeb5dd31a4d4d962635f13f106bf3428fe26e39bce696c21c",
   "verified-by": "alice",
+  "date_added": "2026-April-07",
 }
 ---
 A tree view page visualizes the relationships between requirements:

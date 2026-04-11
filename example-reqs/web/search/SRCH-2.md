@@ -3,6 +3,7 @@
   "priority": 1,
   "verified-hash": "dc0aada0a227124e736c9108c71fb801a4c5d018c54712ade04df78bcd8675f4",
   "verified-by": "alice",
+  "date_added": "2026-April-07",
 }
 ---
 Metadata filters allow users to narrow results by:

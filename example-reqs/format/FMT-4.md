@@ -3,6 +3,7 @@
   "priority": 1,
   "verified-hash": "b2e8196fc8a845a25bcfc10762c188f31fd8acf2670a1e1cd8529d0e15b7be68",
   "verified-by": "bob",
+  "date_added": "2026-April-07",
 }
 ---
 Markdown is:

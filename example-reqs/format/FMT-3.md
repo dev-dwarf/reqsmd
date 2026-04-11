@@ -3,6 +3,7 @@
   "priority": 1,
   "verified-hash": "8b51b9c8a26d70f850778da2a0f02719c02ce5c6ab9d65f230ae01b037f6aa61",
   "verified-by": "alice",
+  "date_added": "2026-April-07",
 }
 ---
 JSON frontmatter provides structured metadata while keeping the file human-readable. The format supports:

@@ -3,6 +3,7 @@
   "priority": 1,
   "verified-hash": "0c3349300f29d7c436d7e25dbfda3f0c2cbe10ebb0cf695d0246d4987f46e5d6",
   "verified-by": "bob",
+  "date_added": "2026-April-10",
 }
 ---
 Verification allows teams to confirm that a requirement has been reviewed and approved in its current state. Once verified, any change to the requirement or its dependencies is detectable.

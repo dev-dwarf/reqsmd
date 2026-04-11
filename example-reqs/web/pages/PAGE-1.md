@@ -3,6 +3,7 @@
   "priority": 1,
   "verified-hash": "8f6dbf60a6add36f275ed0cda6923dc908d7a8d2f33ba8615fc478ea81bbeec3",
   "verified-by": "bob",
+  "date_added": "2026-April-07",
 }
 ---
 One page per document:

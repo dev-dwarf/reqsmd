@@ -3,6 +3,7 @@
   "priority": 2,
   "verified-hash": "eb738acdfcc691c48f034f92983b54ce93e843c97b8e195b563585382fa97c9f",
   "verified-by": "alice",
+  "date_added": "2026-April-07",
 }
 ---
 A sortable table enables users to:

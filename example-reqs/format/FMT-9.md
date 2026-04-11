@@ -3,6 +3,7 @@
   "priority": 2,
   "verified-hash": "67e541cce214dac929c86fd69091595f4cda21f41e7cea5174fe2056e9a1690e",
   "verified-by": "alice",
+  "date_added": "2026-April-07",
 }
 ---
 A template file ensures consistency across requirements in a project. It defines:

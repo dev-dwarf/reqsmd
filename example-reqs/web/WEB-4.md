@@ -3,6 +3,7 @@
   "priority": 2,
   "verified-hash": "28752b652159ddb89dd1bd50059d45b2cbd357c027de110e90e9e73a1fba309e",
   "verified-by": "alice",
+  "date_added": "2026-April-07",
 }
 ---
 Matching URL structure to file structure:

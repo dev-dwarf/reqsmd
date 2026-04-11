@@ -3,6 +3,7 @@
   "priority": 2,
   "verified-hash": "d0d589ecbcc958efdb63d9dc59e72b30682ac5ed980fec70ffa5d0fcef53d86d",
   "verified-by": "alice",
+  "date_added": "2026-April-07",
 }
 ---
 SQLite export enables:

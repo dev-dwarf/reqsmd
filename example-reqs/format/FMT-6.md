@@ -3,6 +3,7 @@
   "priority": 2,
   "verified-hash": "7797e7a26f5d21aad5d94469190005d6ee85848316abce0b40fdc83c3a39c59a",
   "verified-by": "alice",
+  "date_added": "2026-April-07",
 }
 ---
 Sorting by the numeric suffix (e.g., `REQ-1`, `REQ-1.1`, `REQ-2`) ensures a consistent, predictable order:

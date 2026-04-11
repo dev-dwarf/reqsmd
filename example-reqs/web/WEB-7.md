@@ -3,6 +3,7 @@
   "priority": 2,
   "verified-hash": "192ce8102058321f0dc092bfb692c4e0712bdbe2a443ccd747f195c643ec91ef",
   "verified-by": "alice",
+  "date_added": "2026-April-07",
 }
 ---
 A parent link enables:

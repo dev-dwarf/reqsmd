@@ -3,6 +3,7 @@
   "priority": 1,
   "verified-hash": "37ad9165cb7e4b497c05b82371bba5d235867ff00535bf66f47d960427e57e26",
   "verified-by": "alice",
+  "date_added": "2026-April-07",
 }
 ---
 Using the filename as the ID:

@@ -3,6 +3,7 @@
   "priority": 1,
   "verified-by": "bob",
   "verified-hash": "80a7e6c26ace9746f57662810e69d6da82b62dfb672cb66f8ca0098e25b6890d",
+  "date_added": "2026-April-10",
 }
 ---
 Outputs one of:

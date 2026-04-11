@@ -3,6 +3,7 @@
   "priority": 1,
   "verified-hash": "a7d7e9233a206479dc681125f9b06a47b1e201d3ed4e016baa4af992691bc932",
   "verified-by": "bob",
+  "date_added": "2026-April-07",
 }
 ---
 Static HTML enables:

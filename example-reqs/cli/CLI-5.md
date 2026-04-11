@@ -3,6 +3,7 @@
   "priority": 1,
   "verified-hash": "c18bb80038746d4bbc6549b6c188c7cbfd2f91ccb05aa03977e8a29807ed8825",
   "verified-by": "bob",
+  "date_added": "2026-April-07",
 }
 ---
 A static website allows:

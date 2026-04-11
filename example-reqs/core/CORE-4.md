@@ -3,6 +3,7 @@
   "priority": 1,
   "verified-hash": "dfdc53442d1cf89498b7af754d3b877ead337a35de06cdf93759e5c5bc837f44",
   "verified-by": "alice",
+  "date_added": "2026-April-07",
 }
 ---
 A shared core library:

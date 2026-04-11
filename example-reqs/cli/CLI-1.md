@@ -3,6 +3,7 @@
   "priority": 1,
   "verified-hash": "7d3c088ca62c5f71ad3ca916739397b962368b0545ed3e298404fe654854e371",
   "verified-by": "alice",
+  "date_added": "2026-April-07",
 }
 ---
 A CLI enables:

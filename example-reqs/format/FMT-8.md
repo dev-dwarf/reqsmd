@@ -3,6 +3,7 @@
   "priority": 1,
   "verified-hash": "8dc7101f8a62092ea190e776ff5f1bf0c6421124854c23a66632df515d9479bd",
   "verified-by": "alice",
+  "date_added": "2026-April-07",
 }
 ---
 The double-bracket syntax is:

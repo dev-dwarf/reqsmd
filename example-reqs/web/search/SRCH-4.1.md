@@ -3,6 +3,7 @@
   "priority": 2,
   "verified-hash": "962edcdbf00e13d8c8be093bbb5b967893800800ba19aefeba35e81e82f78934",
   "verified-by": "alice",
+  "date_added": "2026-April-07",
 }
 ---
 Vendoring dependencies:

@@ -3,6 +3,7 @@
   "priority": 1,
   "verified-hash": "cd08808135b6134e25a6ddfca755362876fbb5a6511ad2974d30655f3b0b605d",
   "verified-by": "alice",
+  "date_added": "2026-April-07",
 }
 ---
 A search capability enables users to:

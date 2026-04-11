@@ -3,6 +3,7 @@
   "priority": 1,
   "verified-hash": "7f4c3d230a37ff054441c45a5495dc53a6f49a529a7ca030fe841240338dff2f",
   "verified-by": "bob",
+  "date_added": "2026-April-07",
 }
 ---
 The command checks all requirements efficiently by building a single snapshot of stored dependency hashes, then computing each requirement's current hash against that snapshot. This is O(n) in the number of requirements.

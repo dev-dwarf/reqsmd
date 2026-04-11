@@ -3,6 +3,7 @@
   "priority": 3,
   "verified-hash": "4e44867f4f2c30bc4ba91df8fd61105816d44ebc51d6f86639ebb509e69f9b60",
   "verified-by": "alice",
+  "date_added": "2026-April-07",
 }
 ---
 Adding newlines after block-level elements:

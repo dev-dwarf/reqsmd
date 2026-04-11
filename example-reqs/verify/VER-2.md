@@ -3,6 +3,7 @@
   "priority": 1,
   "verified-hash": "5917f560a2c16d77c588dec179284a288528f9ee8f1d21405900109fcde22a40",
   "verified-by": "bob",
+  "date_added": "2026-April-10",
 }
 ---
 Including the stored hashes of dependencies means that re-verifying a dependency invalidates all requirements that depend on it. This propagates changes up the traceability chain automatically.
