@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .core import (export_sqlite, get_hash_fields, get_stored_hashes,
                    load_project, req_verification_status, verify_requirement)
+from .importer import import_csv
 
 
 def main():
@@ -48,6 +49,18 @@ def main():
 
     check_parser = subparsers.add_parser("check", help="Check all requirements")
     check_parser.add_argument("--doc", "-d", help="Project root path", default=".")
+
+    import_parser = subparsers.add_parser("import", help="Import operations")
+    import_subparsers = import_parser.add_subparsers(dest="import_command")
+
+    import_csv_parser = import_subparsers.add_parser("csv", help="Import requirements from CSV")
+    import_csv_parser.add_argument("file", help="CSV file to import")
+    import_csv_parser.add_argument("--id-col", required=True, help="Column to use as requirement ID")
+    import_csv_parser.add_argument("--req-col", required=True, help="Column to use as requirement text")
+    import_csv_parser.add_argument("--rationale-col", help="Column to use as rationale/body text")
+    import_csv_parser.add_argument("--doc-col", help="Column to use as document folder")
+    import_csv_parser.add_argument("--attrs", nargs="+", metavar="COL", help="Columns to include as metadata attributes")
+    import_csv_parser.add_argument("--output", "-o", help="Output directory (default: CSV filename without extension)")
 
     args = parser.parse_args()
 
@@ -152,6 +165,26 @@ def main():
             return 0
 
         export_parser.print_help()
+        return 1
+
+    elif args.command == "import":
+        if args.import_command == "csv":
+            output = args.output or Path(args.file).stem
+            try:
+                count = import_csv(
+                    args.file, output,
+                    id_col=args.id_col,
+                    req_col=args.req_col,
+                    rationale_col=args.rationale_col,
+                    doc_col=args.doc_col,
+                    attrs=args.attrs or [],
+                )
+            except ValueError as e:
+                print(f"Error: {e}", file=sys.stderr)
+                return 1
+            print(f"Imported {count} requirements to {output}/")
+            return 0
+        import_parser.print_help()
         return 1
 
     parser.print_help()
