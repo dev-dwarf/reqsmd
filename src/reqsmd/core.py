@@ -69,17 +69,6 @@ class Project:
         collect(self.root)
         return docs
 
-    def get_template_defaults(self) -> dict[str, Any]:
-        """Get default values from template (new format with 'default' key)."""
-        defaults = {}
-        for key, value in self.template.items():
-            if isinstance(value, dict) and "default" in value:
-                defaults[key] = value["default"]
-            else:
-                # Legacy format: value is the default directly
-                defaults[key] = value
-        return defaults
-
     def get_hidden_fields(self) -> set[str]:
         """Get set of field names not shown in search (show-search: false)."""
         hidden = set()
@@ -294,10 +283,9 @@ def export_sqlite(project: Project, output_path: Path | str) -> int:
     cursor.execute("""
         CREATE TABLE template (
             field TEXT PRIMARY KEY,
-            default_value TEXT,
             show_search INTEGER,
             show_compact INTEGER,
-            hash_include INTEGER
+            verified INTEGER
         )
     """)
 
@@ -332,16 +320,13 @@ def export_sqlite(project: Project, output_path: Path | str) -> int:
     for field_name, field_config in project.template.items():
         if not isinstance(field_config, dict):
             continue
-        default = field_config.get("default")
         cursor.execute(
-            "INSERT INTO template (field, default_value, show_search, show_compact, hash_include) "
-            "VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO template (field, show_search, show_compact, verified) VALUES (?, ?, ?, ?)",
             (
                 field_name,
-                json.dumps(default) if default is not None else None,
                 int(field_config.get("show-search", True)),
                 int(field_config.get("show-compact", True)),
-                int(field_config.get("hash-include", False)),
+                int(field_config.get("verified", False)),
             ),
         )
 
@@ -361,12 +346,12 @@ def get_stored_hashes(project: Project) -> dict[str, str]:
 def get_hash_fields(project: Project) -> list[str]:
     """Return sorted list of metadata fields (beyond 'req') to include in requirement hash.
 
-    'req' is always included in the hash regardless of hash-include, so it is excluded here
-    to avoid double-counting.
+    'req' is always included in the hash regardless of the 'verified' flag, so it is excluded
+    here to avoid double-counting.
     """
     return sorted(
         key for key, value in project.template.items()
-        if isinstance(value, dict) and value.get("hash-include", False)
+        if isinstance(value, dict) and value.get("verified", False)
         and key not in _VERIFY_SYSTEM_FIELDS
         and key != "req"
     )

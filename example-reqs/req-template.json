@@ -1,44 +1,37 @@
 {
   "req": {
-    "default": null,
     "show-search": true,
     "show-compact": true,
-    "hash-include": true,
+    "verified": true,
   },
   "priority": {
-    "default": null,
     "show-search": true,
     "show-compact": true,
-    "hash-include": true,
+    "verified": true,
   },
   "date_added": {
-    "default": null,
     "show-search": false,
     "show-compact": false,
-    "hash-include": false,
+    "verified": false,
   },
   "owner": {
-    "default": null,
     "show-search": false,
     "show-compact": true,
-    "hash-include": true,
+    "verified": true,
   },
   "author": {
-    "default": null,
     "show-search": false,
     "show-compact": false,
-    "hash-include": false,
+    "verified": false,
   },
   "verified-hash": {
-    "default": null,
     "show-search": false,
     "show-compact": false,
-    "hash-include": false,
+    "verified": false,
   },
   "verified-by": {
-    "default": null,
     "show-search": false,
     "show-compact": false,
-    "hash-include": false,
+    "verified": false,
   },
 }

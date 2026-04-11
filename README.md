@@ -43,21 +43,21 @@ my-project/
 
 ```json
 {
-  "req":      { "default": "", "show-search": true, "hash-include": true },
-  "priority": { "default": null, "show-compact": false, "hash-include": true }
+  "req":      { "show-search": true, "verified": true },
+  "priority": { "show-compact": false, "verified": true }
 }
 ```
 
 - `default` — value pre-filled when creating a new requirement
 - `show-search` — whether the field appears as a column in the search UI (default: true)
 - `show-compact` — whether the field appears in compact view (default: true)
-- `hash-include` — whether the field is included in the verification hash (default: false); `req` is always included regardless
+- `verified` — whether the field is included in the verification hash (default: false); `req` is always included regardless
 
 ## Verification
 
 reqsmd can hash requirements and detect changes — a "compile step" that ensures traceability links remain valid as requirements evolve.
 
-Each requirement's hash covers its `req` statement, any `hash-include` fields, and the stored verification hashes of all linked-to requirements. This means that if a dependency changes and is re-verified, all requirements that depend on it will fail their check until they are re-verified as well.
+Each requirement's hash covers its `req` statement, any fields with `verified: true`, and the stored verification hashes of all linked-to requirements. This means that if a dependency changes and is re-verified, all requirements that depend on it will fail their check until they are re-verified as well.
 
 ```
 reqsmd req verify REQ-ID USER [--force] [--doc PATH]
