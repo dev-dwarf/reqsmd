@@ -67,7 +67,7 @@ def cmd_export_sqlite(args):
 
 def _do_verify(req, project, user, hash_fields, stored_hashes, force, visiting, verified):
     """Recursively verify a requirement. Raises on cycles. Returns False if dep unverified."""
-    if req.id in verified:
+    if req.id in verified and not force:
         return True
     if req.id in visiting:
         path = " -> ".join(visiting) + f" -> {req.id}"
@@ -82,8 +82,10 @@ def _do_verify(req, project, user, hash_fields, stored_hashes, force, visiting, 
 
     for dep_id in req.link_to:
         dep = project.get_requirement(dep_id)
-        if dep is None or stored_hashes.get(dep_id):
-            continue  # broken link or already verified
+        if dep is None:
+            continue  # broken link
+        if not force and stored_hashes.get(dep_id):
+            continue  # already verified and not forcing re-verify
         if not _do_verify(dep, project, user, hash_fields, stored_hashes, force, visiting, verified):
             visiting.discard(req.id)
             return False
