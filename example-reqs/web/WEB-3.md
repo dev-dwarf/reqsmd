@@ -1,7 +1,6 @@
 {
   "req": "The website shall be servable using Python's built-in http.server.",
   "priority": 2,
-  "phase": "web",
   "verified-hash": "9a44115596d7e33409bad9deaae8beb35ed53fbe4fc8d435b26c5bba03b7339a",
   "verified-by": "alice",
 }

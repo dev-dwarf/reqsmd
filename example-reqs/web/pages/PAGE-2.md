@@ -1,7 +1,6 @@
 {
   "req": "Each requirement shall have an anchor link on its document page.",
   "priority": 1,
-  "phase": "web",
   "verified-hash": "4719c17b450428581db806304f29bf275ac21c3dd07d426fa0c050fd27f6c250",
   "verified-by": "alice",
 }

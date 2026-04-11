@@ -16,7 +16,6 @@ Requirements management using plain markdown files. Requirements live in version
 {
   "req": "The system shall do X.",
   "priority": 1,
-  "phase": "design",
 }
 ---
 Optional rationale and notes in markdown.
@@ -45,8 +44,7 @@ my-project/
 ```json
 {
   "req":      { "default": "", "show-search": true, "hash-include": true },
-  "priority": { "default": null, "show-compact": false, "hash-include": true },
-  "phase":    { "default": "" }
+  "priority": { "default": null, "show-compact": false, "hash-include": true }
 }
 ```
 

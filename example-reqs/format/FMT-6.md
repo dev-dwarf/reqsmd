@@ -1,7 +1,6 @@
 {
   "req": "Requirements within a document shall be ordered by their ID suffix.",
   "priority": 2,
-  "phase": "core",
   "verified-hash": "7797e7a26f5d21aad5d94469190005d6ee85848316abce0b40fdc83c3a39c59a",
   "verified-by": "alice",
 }

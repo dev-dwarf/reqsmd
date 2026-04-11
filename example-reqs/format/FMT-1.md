@@ -1,7 +1,6 @@
 {
   "req": "Each requirement shall be stored in a separate markdown file.",
   "priority": 1,
-  "phase": "core",
   "verified-hash": "8af33b0c17a014faded28245d5ff4de78061abcb6a504fd500f0c49aeb1e2ceb",
   "verified-by": "alice",
 }

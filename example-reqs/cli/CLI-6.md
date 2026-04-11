@@ -1,7 +1,6 @@
 {
   "req": "The CLI shall provide a `reqsmd req verify REQ-ID USER` command to hash and record verification of a requirement.",
   "priority": 1,
-  "phase": "cli",
   "verified-hash": "f024bd0b37d6b9b08c0afcb3ee0eb4bcbad9638701119fcb5fb7e8ebc5c9ef64",
   "verified-by": "bob",
 }

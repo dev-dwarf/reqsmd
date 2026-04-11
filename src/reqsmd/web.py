@@ -183,10 +183,7 @@ def generate_requirement_html(req: Requirement, project: Project, current_doc: D
     meta_parts = []
     if "priority" not in hidden_fields and req.priority is not None:
         meta_parts.append(f'<span class="{meta_class("priority")}">Priority: {req.priority}</span>')
-    if "phase" not in hidden_fields and req.phase:
-        meta_parts.append(f'<span class="{meta_class("phase")}">Phase: {req.phase}</span>')
-
-    special_fields = {"priority", "phase", "req"}
+    special_fields = {"priority", "req"}
     for key, value in req.metadata.items():
         if key in hidden_fields or key in special_fields:
             continue

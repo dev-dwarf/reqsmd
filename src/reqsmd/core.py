@@ -24,10 +24,6 @@ class Requirement:
     def priority(self) -> int | None:
         return self.metadata.get("priority")
 
-    @property
-    def phase(self) -> str | None:
-        return self.metadata.get("phase")
-
 
 @dataclass
 class Document:

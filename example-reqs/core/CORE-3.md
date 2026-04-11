@@ -1,7 +1,6 @@
 {
   "req": "MDOORS shall use a Python virtual environment for dependencies.",
   "priority": 2,
-  "phase": "core",
   "verified-hash": "b61be97508a016eb8843aa48dd2a62b523cf3a2ea461e732ccb04ea6cdf75d9b",
   "verified-by": "alice",
 }

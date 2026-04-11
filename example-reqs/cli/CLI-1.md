@@ -1,7 +1,6 @@
 {
   "req": "MDOORS shall provide a command-line interface for all operations.",
   "priority": 1,
-  "phase": "core",
   "verified-hash": "7d3c088ca62c5f71ad3ca916739397b962368b0545ed3e298404fe654854e371",
   "verified-by": "alice",
 }

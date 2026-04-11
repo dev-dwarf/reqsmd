@@ -1,7 +1,6 @@
 {
   "req": "MDOORS shall support requirement verification via cryptographic hashing.",
   "priority": 1,
-  "phase": "core",
   "verified-hash": "0c3349300f29d7c436d7e25dbfda3f0c2cbe10ebb0cf695d0246d4987f46e5d6",
   "verified-by": "bob",
 }

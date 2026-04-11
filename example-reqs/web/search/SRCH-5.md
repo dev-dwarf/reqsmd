@@ -1,7 +1,6 @@
 {
   "req": "Search results shall be displayed in a sortable table.",
   "priority": 2,
-  "phase": "web",
   "verified-hash": "eb738acdfcc691c48f034f92983b54ce93e843c97b8e195b563585382fa97c9f",
   "verified-by": "alice",
 }

@@ -1,7 +1,6 @@
 {
   "req": "The requirement file name shall be the requirement ID.",
   "priority": 1,
-  "phase": "core",
   "verified-hash": "37ad9165cb7e4b497c05b82371bba5d235867ff00535bf66f47d960427e57e26",
   "verified-by": "alice",
 }

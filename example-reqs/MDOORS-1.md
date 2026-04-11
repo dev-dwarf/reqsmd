@@ -1,7 +1,6 @@
 {
   "req": "MDOORS shall be a requirements management tool implemented in Python.",
   "priority": 1,
-  "phase": "core",
   "verified-hash": "b6292978489a8c21676df7ce1356641f0010f23f8fc5aaccb34ee43158a5fdec",
   "verified-by": "alice",
 }

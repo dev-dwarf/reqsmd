@@ -1,7 +1,6 @@
 {
   "req": "The core library shall provide a shared API for all CLI commands.",
   "priority": 1,
-  "phase": "core",
   "verified-hash": "dfdc53442d1cf89498b7af754d3b877ead337a35de06cdf93759e5c5bc837f44",
   "verified-by": "alice",
 }
