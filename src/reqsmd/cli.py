@@ -5,8 +5,9 @@ import csv
 import sys
 from pathlib import Path
 
-from .core import (export_sqlite, get_hash_fields, get_stored_hashes,
-                   load_project, req_verification_status, verify_requirement)
+from .core import (compute_cascade_failures, export_sqlite, get_hash_fields,
+                   get_stored_hashes, load_project, req_verification_status,
+                   verify_requirement)
 from .importer import import_csv
 
 
@@ -104,16 +105,19 @@ def main():
 
     elif args.command == "check":
         project = load_project(Path(args.doc))
-        all_reqs = project.all_requirements()
         stored_hashes = get_stored_hashes(project)
         hash_fields = get_hash_fields(project)
-        failing = [(req.id, s) for req in all_reqs
-                   if (s := req_verification_status(req, stored_hashes, hash_fields)) != "OK"]
-        if failing:
-            for req_id, status in failing:
+        direct, cascade = compute_cascade_failures(project, stored_hashes, hash_fields)
+        if direct or cascade:
+            for req_id, status in direct:
                 print(f"{status} {req_id}")
+            for req_id in cascade:
+                print(f"STALE {req_id}")
+            total = len(direct) + len(cascade)
+            print(f"\n{total} requirements require attention "
+                  f"({len(direct)} direct, {len(cascade)} downstream)")
             return 1
-        print(f"OK ({len(all_reqs)} requirements verified)")
+        print(f"OK ({len(project.all_requirements())} requirements verified)")
         return 0
 
     elif args.command == "export":

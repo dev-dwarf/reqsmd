@@ -393,6 +393,40 @@ def req_verification_status(req: Requirement, stored_hashes: dict[str, str],
     return "FAIL"
 
 
+def compute_cascade_failures(
+    project: Project, stored_hashes: dict[str, str], hash_fields: list[str]
+) -> tuple[list[tuple[str, str]], list[str]]:
+    """Compute direct failures and the downstream requirements that will cascade.
+
+    Returns (direct, cascade) where:
+    - direct: list of (req_id, status) for requirements that currently FAIL or UNVERIFIED
+    - cascade: list of req_ids that currently pass but will need re-verification once
+               their failing dependencies are re-verified
+    """
+    direct: list[tuple[str, str]] = []
+    failing_ids: set[str] = set()
+    for req in project.all_requirements():
+        status = req_verification_status(req, stored_hashes, hash_fields)
+        if status != "OK":
+            direct.append((req.id, status))
+            failing_ids.add(req.id)
+
+    cascade: list[str] = []
+    cascade_ids: set[str] = set()
+    queue = list(failing_ids)
+    while queue:
+        req = project.get_requirement(queue.pop())
+        if req is None:
+            continue
+        for dependent_id in req.link_from:
+            if dependent_id not in failing_ids and dependent_id not in cascade_ids:
+                cascade_ids.add(dependent_id)
+                cascade.append(dependent_id)
+                queue.append(dependent_id)
+
+    return direct, cascade
+
+
 def verify_requirement(req: Requirement, project: Project, user: str,
                         hash_fields: list[str], stored_hashes: dict[str, str],
                         force: bool = False, on_verify=None,
