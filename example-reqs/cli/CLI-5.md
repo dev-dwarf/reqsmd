@@ -1,7 +1,7 @@
 {
   "req": "The CLI shall support exporting to a static website.",
   "priority": 1,
-  "verified-hash": "c18bb80038746d4bbc6549b6c188c7cbfd2f91ccb05aa03977e8a29807ed8825",
+  "verified-hash": "78e34c158beffd1a2939de1a3df5eb8c1e12bfe3c06ca755586204d8af23c8c7",
   "verified-by": "bob",
   "date_added": "2026-April-07",
 }

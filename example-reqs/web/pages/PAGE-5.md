@@ -1,7 +1,7 @@
 {
   "req": "The markdown-to-HTML conversion shall support tables.",
   "priority": 2,
-  "verified-hash": "24e86e874a32e5468323669599d63b76c5770050bbb695655b77799f597c0546",
+  "verified-hash": "c469b5319866acd827f448111d4a70fd27f5d2b16dd65e5f6eaeb693c8f27007",
   "verified-by": "bob",
   "date_added": "2026-April-07",
 }

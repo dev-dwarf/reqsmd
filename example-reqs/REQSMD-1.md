@@ -1,8 +1,8 @@
 {
-  "req": "MDOORS shall be a requirements management tool implemented in Python.",
+  "req": "REQSMD shall be a requirements management tool implemented in Python.",
   "priority": 1,
-  "verified-hash": "b6292978489a8c21676df7ce1356641f0010f23f8fc5aaccb34ee43158a5fdec",
-  "verified-by": "alice",
+  "verified-hash": "113a7ed367b7c4687214c08f7229881b125635e9c315054c7b6cd091bdeae79f",
+  "verified-by": "bob",
   "date_added": "2026-April-07",
 }
 ---

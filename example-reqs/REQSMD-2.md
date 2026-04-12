@@ -1,8 +1,8 @@
 {
-  "req": "MDOORS shall store all requirements in plain text files.",
+  "req": "REQSMD shall store all requirements in plain text files.",
   "priority": 1,
-  "verified-hash": "a3b97165af5be4b1e9ae3e774555812f432e7be0736dbe60574a3dad5312859d",
-  "verified-by": "alice",
+  "verified-hash": "d1283dec96525d36daecc5cf0dff6ff8a9ec159cd53799b987200b3875698ad6",
+  "verified-by": "bob",
   "date_added": "2026-April-07",
 }
 ---

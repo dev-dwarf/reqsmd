@@ -1,8 +1,8 @@
 {
-  "req": "MDOORS shall maintain bidirectional link tracking between requirements.",
+  "req": "REQSMD shall maintain bidirectional link tracking between requirements.",
   "priority": 1,
-  "verified-hash": "6bf7e223cead5ed45257a39f3a63f1ef9deef3dc6622a44d47b7497dbd48169a",
-  "verified-by": "alice",
+  "verified-hash": "09b0f001f1c416fd2dc0cdbd8fed809fbd61c844b84e12a905179649028f171f",
+  "verified-by": "bob",
   "date_added": "2026-April-07",
 }
 ---

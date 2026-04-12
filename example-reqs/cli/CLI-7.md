@@ -2,7 +2,7 @@
   "req": "The CLI shall provide a `reqsmd req check REQ-ID` command to verify a single requirement against its stored hash.",
   "priority": 1,
   "verified-by": "bob",
-  "verified-hash": "80a7e6c26ace9746f57662810e69d6da82b62dfb672cb66f8ca0098e25b6890d",
+  "verified-hash": "c4484f6e20919a091b669e4a59fbc15e1894a94c52d3d754e6a373af04b13782",
   "date_added": "2026-April-10",
 }
 ---

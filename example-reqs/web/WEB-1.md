@@ -1,7 +1,7 @@
 {
-  "req": "MDOORS shall generate a static HTML website from requirements.",
+  "req": "REQSMD shall generate a static HTML website from requirements.",
   "priority": 1,
-  "verified-hash": "a7d7e9233a206479dc681125f9b06a47b1e201d3ed4e016baa4af992691bc932",
+  "verified-hash": "0011a6cc206d733d3eabe68ecf41149ca274b24cbbf92264a5a7c1b416a04e9c",
   "verified-by": "bob",
   "date_added": "2026-April-07",
 }

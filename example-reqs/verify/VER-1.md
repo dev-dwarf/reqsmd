@@ -1,7 +1,7 @@
 {
-  "req": "MDOORS shall support requirement verification via cryptographic hashing.",
+  "req": "REQSMD shall support requirement verification via cryptographic hashing.",
   "priority": 1,
-  "verified-hash": "0c3349300f29d7c436d7e25dbfda3f0c2cbe10ebb0cf695d0246d4987f46e5d6",
+  "verified-hash": "19ef4af6adaaa26809997fa59c2a7b60cf77de672b4ef8ac2e5e0b5ac2ec9a91",
   "verified-by": "bob",
   "date_added": "2026-April-10",
 }

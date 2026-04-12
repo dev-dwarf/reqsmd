@@ -1,7 +1,7 @@
 {
   "req": "The CLI shall provide a `reqsmd check` command to check all requirements in the project in a single pass.",
   "priority": 1,
-  "verified-hash": "7f4c3d230a37ff054441c45a5495dc53a6f49a529a7ca030fe841240338dff2f",
+  "verified-hash": "8b0be963088bbf81c935e2b2970f0f6d660e98ec68a4732766d942f96f4958c8",
   "verified-by": "bob",
   "date_added": "2026-April-07",
 }

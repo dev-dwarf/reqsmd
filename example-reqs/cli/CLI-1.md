@@ -1,8 +1,8 @@
 {
-  "req": "MDOORS shall provide a command-line interface for all operations.",
+  "req": "REQSMD shall provide a command-line interface for all operations.",
   "priority": 1,
-  "verified-hash": "7d3c088ca62c5f71ad3ca916739397b962368b0545ed3e298404fe654854e371",
-  "verified-by": "alice",
+  "verified-hash": "a38cc74c286686a9e81015aefd7dbe2087ebb1b2fb5cda664c93c5d5841ac44e",
+  "verified-by": "bob",
   "date_added": "2026-April-07",
 }
 ---

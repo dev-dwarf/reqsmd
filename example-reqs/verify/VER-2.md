@@ -1,7 +1,7 @@
 {
   "req": "The verification hash shall cover the req field, any hash-include template fields, and the stored verification hashes of all linked-to requirements.",
   "priority": 1,
-  "verified-hash": "5917f560a2c16d77c588dec179284a288528f9ee8f1d21405900109fcde22a40",
+  "verified-hash": "2fdb8bea8dab90ebaac2592d76494d7f99a9eb72a47a4957c19b994c19401350",
   "verified-by": "bob",
   "date_added": "2026-April-10",
 }

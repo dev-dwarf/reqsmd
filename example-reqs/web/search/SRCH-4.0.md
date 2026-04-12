@@ -2,7 +2,7 @@
   "req": "The search functionality shall use sql.js for client-side SQL queries.",
   "priority": 2,
   "verified-hash": "79b3ac23ec0cb60bc26fe0f9ffb4e37ed807b49646dc8960757ab181ae2df00c",
-  "verified-by": "alice",
+  "verified-by": "bob",
   "date_added": "2026-April-07",
 }
 ---

@@ -1,8 +1,8 @@
 {
-  "req": "MDOORS shall use a Python virtual environment for dependencies.",
+  "req": "REQSMD shall use a Python virtual environment for dependencies.",
   "priority": 2,
-  "verified-hash": "b61be97508a016eb8843aa48dd2a62b523cf3a2ea461e732ccb04ea6cdf75d9b",
-  "verified-by": "alice",
+  "verified-hash": "b757ab26d326dfafca82be5359701e5b754e2b7ab6a2be7a57e62062e84c63f2",
+  "verified-by": "bob",
   "date_added": "2026-April-07",
 }
 ---

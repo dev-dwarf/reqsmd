@@ -1,8 +1,8 @@
 {
-  "req": "MDOORS shall use minimal external dependencies.",
+  "req": "REQSMD shall use minimal external dependencies.",
   "priority": 2,
-  "verified-hash": "85c28047b732cd4919fe32cc3c4ca92ed1f95db4670925a7b2677169c86260bf",
-  "verified-by": "alice",
+  "verified-hash": "a15b1d7580e89f6978c375245a47668a14881a0dba7456892536ac42fd4c233e",
+  "verified-by": "bob",
   "date_added": "2026-April-07",
 }
 ---

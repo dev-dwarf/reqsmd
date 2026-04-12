@@ -1,7 +1,7 @@
 {
   "req": "Each document shall have its own HTML page.",
   "priority": 1,
-  "verified-hash": "8f6dbf60a6add36f275ed0cda6923dc908d7a8d2f33ba8615fc478ea81bbeec3",
+  "verified-hash": "7592faa4ca84632fc7a1c927731ce9b4ce3d0fd6eb51b57177c69a15220719f3",
   "verified-by": "bob",
   "date_added": "2026-April-07",
 }
