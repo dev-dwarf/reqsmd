@@ -6,4 +6,4 @@
   "date_added": "2026-April-07",
 }
 ---
-Engineering teams use diverse operating systems. Supporting both major platforms ensures the tool can be adopted without forcing infrastructure changes. See [[MDOORS-1]] for implementation language choice.
+Engineering teams use diverse operating systems. Supporting both major platforms ensures the tool can be adopted without forcing infrastructure changes. See [[REQSMD-1]] for implementation language choice.
