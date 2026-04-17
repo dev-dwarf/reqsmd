@@ -24,6 +24,17 @@ function saveSettings() {
     localStorage.setItem(STORAGE_KEYS.sort, JSON.stringify(currentSort));
 }
 
+function saveStateToUrl() {
+    const params = new URLSearchParams();
+    const q = document.getElementById('search-input').value;
+    if (q) params.set('q', q);
+    const sql = document.getElementById('sql-input').value.trim();
+    if (sql) params.set('sql', sql);
+    if (currentSort.column) params.set('sort', JSON.stringify(currentSort));
+    if (filters.length) params.set('filters', JSON.stringify(filters));
+    history.replaceState(null, '', location.pathname + (params.toString() ? '?' + params : ''));
+}
+
 function resetSettings() {
     filters = [];
     hiddenColumns = new Set(defaultHiddenColumns);
@@ -133,6 +144,17 @@ async function initDatabase() {
             if (savedSort) currentSort = JSON.parse(savedSort);
         } catch (e) {
             console.warn('Failed to load saved settings:', e);
+        }
+
+        // URL params override localStorage (for shareable links)
+        try {
+            const params = new URLSearchParams(location.search);
+            if (params.has('q')) document.getElementById('search-input').value = params.get('q');
+            if (params.has('sql')) document.getElementById('sql-input').value = params.get('sql');
+            if (params.has('sort')) currentSort = JSON.parse(params.get('sort'));
+            if (params.has('filters')) filters = JSON.parse(params.get('filters'));
+        } catch (e) {
+            console.warn('Failed to load URL state:', e);
         }
 
         buildColumnsUI();
@@ -255,6 +277,7 @@ let currentResults = { columns: [], rows: [] };
 
 function runSearch() {
     if (!db) { showError('Database not loaded yet'); return; }
+    saveStateToUrl();
 
     const sqlInput = document.getElementById('sql-input').value.trim();
     if (sqlInput) {
@@ -264,7 +287,7 @@ function runSearch() {
                 currentResults = { columns: [], rows: [] };
             } else {
                 clearError();
-                currentResults = { columns: results[0].columns, rows: results[0].values };
+                currentResults = { columns: results[0].columns, rows: results[0].values, customSql: true };
             }
             displayCurrentResults();
         } catch (error) {
@@ -311,7 +334,7 @@ function runSearch() {
 }
 
 function displayCurrentResults() {
-    const { columns, rows } = currentResults;
+    const { columns, rows, customSql } = currentResults;
     const table = document.getElementById('results-table');
     const thead = table.querySelector('thead');
     const tbody = table.querySelector('tbody');

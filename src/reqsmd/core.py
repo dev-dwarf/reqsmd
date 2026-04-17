@@ -141,8 +141,13 @@ def parse_requirement_file(file_path: Path) -> Requirement:
         metadata = {}
         markdown_content = content.strip()
 
-    # Extract references using [[REQID]] syntax
+    # Extract references from markdown body and req metadata field
     link_to = extract_references(markdown_content)
+    req_text = metadata.get("req")
+    if req_text:
+        for ref in extract_references(str(req_text)):
+            if ref not in link_to:
+                link_to.append(ref)
 
     return Requirement(
         id=req_id,
@@ -254,9 +259,11 @@ def export_sqlite(project: Project, output_path: Path | str) -> int:
     conn = sqlite3.connect(str(output_path))
     cursor = conn.cursor()
 
-    # Compute verification status for all requirements up front
+    # Compute verification status for all requirements up front (including STALE)
     hash_fields = get_hash_fields(project)
     stored_hashes = get_stored_hashes(project)
+    _, cascade = compute_cascade_failures(project, stored_hashes, hash_fields)
+    cascade_ids = set(cascade)
 
     # Collect metadata keys from requirements AND template so columns exist even if unused
     all_keys: set[str] = set()
@@ -281,10 +288,10 @@ def export_sqlite(project: Project, output_path: Path | str) -> int:
 
     cursor.execute("""
         CREATE TABLE links (
-            source TEXT NOT NULL,
-            target TEXT NOT NULL,
-            PRIMARY KEY (source, target),
-            FOREIGN KEY (source) REFERENCES requirements(id)
+            link_from TEXT NOT NULL,
+            link_to TEXT NOT NULL,
+            PRIMARY KEY (link_from, link_to),
+            FOREIGN KEY (link_from) REFERENCES requirements(id)
         )
     """)
 
@@ -300,6 +307,8 @@ def export_sqlite(project: Project, output_path: Path | str) -> int:
     for req in reqs:
         parent_path = os.path.relpath(req.file_path.parent, project.root_path)
         status = req_verification_status(req, stored_hashes, hash_fields)
+        if status == "OK" and req.id in cascade_ids:
+            status = "STALE"
         values: dict[str, Any] = {
             "id": req.id,
             "content": req.content,
@@ -322,7 +331,7 @@ def export_sqlite(project: Project, output_path: Path | str) -> int:
         cursor.execute(f"INSERT INTO requirements ({cols}) VALUES ({placeholders})", list(values.values()))
 
         for target_id in req.link_to:
-            cursor.execute("INSERT OR IGNORE INTO links (source, target) VALUES (?, ?)",
+            cursor.execute("INSERT OR IGNORE INTO links (link_from, link_to) VALUES (?, ?)",
                            (req.id, target_id))
 
     for field_name, field_config in project.template.items():

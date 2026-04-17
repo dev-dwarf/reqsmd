@@ -5,6 +5,7 @@
     --fg: #000000;
     --fg-muted: #555555;
     --accent: #0055FF;
+    --warn: #FF5500;
     --font: 14px Verdana, sans-serif;
     --nav-h: 40px;
 }
@@ -14,6 +15,8 @@ html { background: var(--fg); }
 body { font: var(--font); color: var(--fg); background: var(--bg); }
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
+a.link-quiet { color: var(--fg-muted) !important; }
+
 
 nav { position: sticky; top: 0; height: var(--nav-h); background: var(--fg); display: flex; align-items: center; gap: 16px; padding: 0 20px; z-index: 10; }
 nav a { color: var(--bg); text-decoration: none; }
@@ -21,13 +24,13 @@ nav a:hover { opacity: 0.75; }
 nav img { height: 24px; vertical-align: middle; }
 
 body > div { display: flex; }
-aside { width: 200px; border-right: 1px solid var(--bg-accent); position: sticky; top: var(--nav-h); height: calc(100vh - var(--nav-h)); overflow-y: auto; }
+aside { width: 200px; border-right: 1px solid var(--bg-accent); position: sticky; top: var(--nav-h); overflow-y: auto; }
 aside > button { display: block; margin: 1rem; }
 aside ul { padding-left: 1rem; list-style-type: none; }
 aside ul + ul { margin-top: 1rem; }
 
 
-main { flex: 1; padding: 24px; }
+main { flex: 1; padding: 24px; min-height: calc(100vh - var(--nav-h)); }
 main > header { border-bottom: 2px solid var(--fg); padding-bottom: 8px; margin-bottom: 20px; }
 main > header h1 { text-transform: uppercase; }
 
@@ -36,9 +39,10 @@ button:hover, button[aria-pressed="true"] { background: var(--fg); color: var(--
 
 article { padding: 10px 0; }
 article > header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px; }
-article > header a { color: var(--fg-muted); font-size: 0.85rem; flex-shrink: 0; }
 article > header p { flex: 1; margin: 0; }
 article > header span { font-size: 0.75rem; color: var(--fg-muted); text-transform: uppercase; white-space: nowrap; }
+article > header strong { color: var(--warn) !important; text-transform: uppercase; }
+article > header strong a { color: var(--warn) !important; text-transform: uppercase; }
 article > blockquote { margin-top: 6px; padding-left: 12px; border-left: 2px dotted var(--fg-muted); }
 article > blockquote p { margin-bottom: 4px; }
 article > blockquote ul { padding-left: 14px; }

@@ -6,11 +6,14 @@ import os
 import re
 import shutil
 import time
+import urllib.parse
 from pathlib import Path
 
 import markdown
 
-from .core import Document, Project, Requirement, export_sqlite, sort_key, strip_trailing_zeros
+from .core import (Document, Project, Requirement, compute_cascade_failures, export_sqlite,
+                   get_hash_fields, get_stored_hashes, req_verification_status,
+                   sort_key, strip_trailing_zeros)
 
 
 # HTML Templates
@@ -94,6 +97,11 @@ def _render_page(title: str, root_path: str, content: str, *,
     )
 
 
+def _root_path(doc: Document, project: Project) -> str:
+    rel = os.path.relpath(doc.path, project.root_path)
+    return "" if rel == "." else "../" * (rel.count(os.sep) + 1)
+
+
 def get_indent_level(req_id: str) -> int:
     """
     Calculate indent level from requirement ID based on dot count in the suffix.
@@ -122,7 +130,8 @@ def make_req_link_html(req_id: str, project: Project, current_doc: Document) -> 
 
 
 def generate_requirement_html(req: Requirement, project: Project, current_doc: Document,
-                              hidden_fields: set[str] = None) -> str:
+                              hidden_fields: set[str] = None, status_map: dict = None,
+                              root_path: str = "") -> str:
     """Generate HTML for a single requirement."""
     hidden_fields = hidden_fields or set()
 
@@ -175,10 +184,14 @@ def generate_requirement_html(req: Requirement, project: Project, current_doc: D
         links_parts = []
         if req.link_to:
             to_links = ", ".join(make_req_link_html(tid, project, current_doc) for tid in req.link_to)
-            links_parts.append(f'<div class="links-to">Links to: {to_links}</div>')
+            ids = ", ".join(f"'{tid}'" for tid in req.link_to)
+            sql = urllib.parse.quote(f"SELECT * FROM requirements WHERE id IN ({ids})")
+            links_parts.append(f'<div><a class="link-quiet" href="{root_path}search.html?sql={sql}">Links to</a>: {to_links}</div>')
         if req.link_from:
             from_links = ", ".join(make_req_link_html(fid, project, current_doc) for fid in req.link_from)
-            links_parts.append(f'<div class="links-from">Linked from: {from_links}</div>')
+            ids = ", ".join(f"'{fid}'" for fid in req.link_from)
+            sql = urllib.parse.quote(f"SELECT * FROM requirements WHERE id IN ({ids})")
+            links_parts.append(f'<div><a class="link-quiet" href="{root_path}search.html?sql={sql}">Linked from</a>: {from_links}</div>')
         links_html = '<footer>' + "".join(links_parts) + '</footer>'
 
     req_text = req.metadata.get("req")
@@ -200,6 +213,22 @@ def generate_requirement_html(req: Requirement, project: Project, current_doc: D
     if content_html.strip():
         rationale_html = f'<blockquote>{content_html}</blockquote>'
 
+    status = (status_map or {}).get(req.id)
+    status_html = ""
+    if status == "FAIL":
+        status_html = "<strong>FAIL</strong>"
+    elif status == "STALE":
+        rid = req.id.replace("'", "''")
+        recursive_sql = (
+            f"WITH RECURSIVE deps(id) AS ("
+            f"SELECT link_to FROM links WHERE link_from = '{rid}' "
+            f"UNION SELECT l.link_to FROM links l JOIN deps d ON l.link_from = d.id"
+            f") SELECT r.* FROM requirements r JOIN deps d ON r.id = d.id "
+            f"WHERE r.verified_status != 'OK'"
+        )
+        sql = urllib.parse.quote(recursive_sql)
+        status_html = f'<strong><a href="{root_path}search.html?sql={sql}">STALE</a></strong>'
+
     level = get_indent_level(req.id)
     heading_tag = f"h{level + 1}"
 
@@ -209,6 +238,7 @@ def generate_requirement_html(req: Requirement, project: Project, current_doc: D
             <{heading_tag}><a href="#{html.escape(req.id)}">{html.escape(req.id)}</a></{heading_tag}>
             {req_text_html}
             {meta_html}
+            {status_html}
         </header>
         {rationale_html}
         {links_html}
@@ -242,14 +272,14 @@ def _build_toc(requirements: list) -> str:
     return "".join(parts)
 
 
-def generate_document_page(doc: Document, project: Project, hidden_fields: set[str] = None) -> str:
+def generate_document_page(doc: Document, project: Project, hidden_fields: set[str] = None,
+                           status_map: dict = None) -> str:
     """Generate HTML page for a document."""
     hidden_fields = hidden_fields or set()
 
-    rel_path = os.path.relpath(doc.path, project.root_path)
-    root_path = "" if rel_path == "." else "../" * (rel_path.count(os.sep) + 1)
+    root_path = _root_path(doc, project)
 
-    reqs_html = [generate_requirement_html(req, project, doc, hidden_fields)
+    reqs_html = [generate_requirement_html(req, project, doc, hidden_fields, status_map, root_path)
                  for req in doc.requirements]
 
     content = f"""
@@ -305,6 +335,18 @@ def generate_website(project: Project, output_path: Path):
 
     hidden_fields = project.get_hidden_fields()
 
+    # Build full status map (OK/FAIL/UNVERIFIED/STALE) for badge display
+    _hash_fields = get_hash_fields(project)
+    _stored_hashes = get_stored_hashes(project)
+    _, _cascade = compute_cascade_failures(project, _stored_hashes, _hash_fields)
+    _cascade_ids = set(_cascade)
+    status_map = {}
+    for req in project.all_requirements():
+        s = req_verification_status(req, _stored_hashes, _hash_fields)
+        if s == "OK" and req.id in _cascade_ids:
+            s = "STALE"
+        status_map[req.id] = s
+
     template_fields = {}
     for key, value in project.template.items():
         template_fields[key] = {"show-search": value.get("show-search", True) if isinstance(value, dict) else True}
@@ -327,5 +369,5 @@ def generate_website(project: Project, output_path: Path):
         rel_path = os.path.relpath(doc.path, project.root_path)
         doc_output = output_path if rel_path == "." else output_path / rel_path
         doc_output.mkdir(parents=True, exist_ok=True)
-        doc_html = generate_document_page(doc, project, hidden_fields)
+        doc_html = generate_document_page(doc, project, hidden_fields, status_map)
         (doc_output / "index.html").write_text(doc_html, encoding="utf-8")
