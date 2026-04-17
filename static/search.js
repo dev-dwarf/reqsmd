@@ -62,7 +62,7 @@ function showError(message) {
 
 function clearError() {
     const errorDiv = document.getElementById('error-message');
-    errorDiv.style.display = 'none';
+    errorDiv.style.display = '';
     errorDiv.textContent = '';
 }
 
@@ -154,7 +154,6 @@ function buildFiltersUI() {
 
     const addBtn = document.createElement('button');
     addBtn.type = 'button';
-    addBtn.className = 'add-filter-btn';
     addBtn.textContent = '+ Filter';
     addBtn.addEventListener('click', () => {
         filters.push({ field: '', value: '' });
@@ -166,7 +165,6 @@ function buildFiltersUI() {
 
 function createFilterRow(idx, field, value) {
     const row = document.createElement('div');
-    row.className = 'filter-row';
 
     const select = document.createElement('select');
     select.innerHTML = '<option value="">Field...</option>';
@@ -188,7 +186,6 @@ function createFilterRow(idx, field, value) {
 
     const removeBtn = document.createElement('button');
     removeBtn.type = 'button';
-    removeBtn.className = 'remove-filter-btn';
     removeBtn.textContent = '×';
     removeBtn.addEventListener('click', () => {
         filters.splice(idx, 1);
@@ -209,13 +206,11 @@ function buildColumnsUI() {
 
     columnOrder.forEach(col => {
         const div = document.createElement('div');
-        div.className = 'column-toggle';
         div.draggable = true;
         div.dataset.column = col;
 
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
-        checkbox.className = 'col-check';
         checkbox.id = `col-${col}`;
         checkbox.checked = !hiddenColumns.has(col);
         checkbox.addEventListener('change', () => {
@@ -229,17 +224,14 @@ function buildColumnsUI() {
         label.textContent = getColumnLabel(col);
 
         const grip = document.createElement('span');
-        grip.className = 'drag-grip';
 
         div.appendChild(grip);
         div.appendChild(checkbox);
         div.appendChild(label);
         container.appendChild(div);
 
-        div.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', col); div.classList.add('dragging'); });
-        div.addEventListener('dragend', () => div.classList.remove('dragging'));
-        div.addEventListener('dragover', (e) => { e.preventDefault(); div.classList.add('drag-over'); });
-        div.addEventListener('dragleave', () => div.classList.remove('drag-over'));
+        div.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', col); });
+        div.addEventListener('dragover', (e) => { e.preventDefault(); });
         div.addEventListener('drop', (e) => {
             e.preventDefault();
             div.classList.remove('drag-over');
@@ -352,7 +344,6 @@ function displayCurrentResults() {
     const headerRow = document.createElement('tr');
     visibleColumns.forEach(col => {
         const th = document.createElement('th');
-        th.className = (col === 'content' || col === 'req') ? 'sortable text-column' : 'sortable';
 
         const span = document.createElement('span');
         span.textContent = getColumnLabel(col);
@@ -360,7 +351,6 @@ function displayCurrentResults() {
 
         if (currentSort.column === col) {
             const indicator = document.createElement('span');
-            indicator.className = 'sort-indicator';
             indicator.textContent = currentSort.direction === 'asc' ? ' ▲' : ' ▼';
             th.appendChild(indicator);
         }
@@ -384,13 +374,12 @@ function displayCurrentResults() {
             const colName = columns[origIdx].toLowerCase();
             const cell = row[origIdx];
 
-            if (colName === 'content' || colName === 'req') td.className = 'text-column';
 
             if (colName === 'id') {
                 const parentIdx = columns.indexOf('parent');
                 const parentPath = parentIdx >= 0 ? row[parentIdx] : '';
                 const href = parentPath ? `${parentPath}/index.html#${cell}` : `index.html#${cell}`;
-                td.innerHTML = `<a href="${escapeHtml(href)}" class="req-link">${escapeHtml(cell)}</a>`;
+                td.innerHTML = `<a href="${escapeHtml(href)}">${escapeHtml(cell)}</a>`;
             } else if (colName === 'content' || colName === 'req') {
                 const text = String(cell || '');
                 td.textContent = text.length > 150 ? text.substring(0, 150) + '...' : text;
@@ -413,12 +402,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('reset-btn').addEventListener('click', resetSettings);
 
     document.getElementById('columns-toggle-btn').addEventListener('click', () => {
-        document.getElementById('columns-popup').classList.toggle('visible');
+        const p = document.getElementById('columns-popup');
+        p.style.display = p.style.display === 'block' ? '' : 'block';
     });
 
     document.addEventListener('click', (e) => {
         const popup = document.getElementById('columns-popup');
         const btn = document.getElementById('columns-toggle-btn');
-        if (!popup.contains(e.target) && e.target !== btn) popup.classList.remove('visible');
+        if (!popup.contains(e.target) && e.target !== btn) popup.style.display = '';
     });
 });

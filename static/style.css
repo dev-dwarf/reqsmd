@@ -10,6 +10,7 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--fg); }
 body { font: var(--font); color: var(--fg); background: var(--bg); }
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
@@ -17,6 +18,7 @@ a:hover { text-decoration: underline; }
 nav { position: sticky; top: 0; height: var(--nav-h); background: var(--fg); display: flex; align-items: center; gap: 16px; padding: 0 20px; z-index: 10; }
 nav a { color: var(--bg); text-decoration: none; }
 nav a:hover { opacity: 0.75; }
+nav img { height: 24px; vertical-align: middle; }
 
 body > div { display: flex; }
 aside { width: 200px; border-right: 1px solid var(--bg-accent); position: sticky; top: var(--nav-h); height: calc(100vh - var(--nav-h)); overflow-y: auto; }
@@ -61,14 +63,11 @@ tr:nth-child(even) { background: var(--bg-accent); }
 #reset-btn { margin-left: auto; }
 #sql-input { width: 100%; }
 #results { margin-top: 12px; overflow-x: auto; }
-#error-message { color: var(--accent); border: 1px solid var(--fg); padding: 6px; margin-bottom: 8px; }
-
-.columns-popup { display: none; position: absolute; top: 100%; left: 0; background: var(--bg); border: 1px solid var(--fg); padding: 8px; z-index: 100; white-space: nowrap; }
-.columns-popup.visible { display: block; }
-
-.col-check { margin: 0px 8px; }
-.drag-grip { cursor: grab !important; }
-.drag-grip::before { content: "•"; }
+#error-message { display: none; color: var(--accent); border: 1px solid var(--fg); padding: 6px; margin-bottom: 8px; }
+#columns-popup { display: none; position: absolute; top: 100%; left: 0; background: var(--bg); border: 1px solid var(--fg); padding: 8px; z-index: 100; white-space: nowrap; }
+#columns-container input { margin: 0 8px; }
+#columns-container [draggable] > span { cursor: ns-resize; }
+#columns-container [draggable] > span::before { content: " • "; }
 
 @media (max-width: 768px) { body > div { flex-direction: column; } aside { width: 100%; height: auto; position: relative; } }
 @media print { nav, aside { display: none; } }

@@ -86,6 +86,13 @@ class Project:
         return hidden
 
 
+def strip_trailing_zeros(req_id: str) -> str:
+    """Strip trailing '.0' segments from a requirement ID (used for filesystem sort order)."""
+    while req_id.endswith('.0'):
+        req_id = req_id[:-2]
+    return req_id
+
+
 def parse_lenient_json(text: str) -> dict[str, Any]:
     """Parse JSON with trailing commas allowed."""
     # Remove trailing commas before ] or }
@@ -96,7 +103,7 @@ def parse_lenient_json(text: str) -> dict[str, Any]:
 def parse_requirement_file(file_path: Path) -> Requirement:
     """Parse a markdown file with JSON frontmatter into a Requirement."""
     content = file_path.read_text(encoding="utf-8")
-    req_id = file_path.stem
+    req_id = strip_trailing_zeros(file_path.stem)
 
     # Check if file starts with JSON frontmatter
     if content.lstrip().startswith("{"):
@@ -154,6 +161,7 @@ def extract_references(content: str) -> list[str]:
     seen = set()
     result = []
     for m in matches:
+        m = strip_trailing_zeros(m)
         if m not in seen:
             seen.add(m)
             result.append(m)
@@ -508,7 +516,7 @@ def resolve_references(content: str, project: Project, current_doc_path: Path = 
         Content with references replaced by HTML links
     """
     def replace_ref(match):
-        req_id = match.group(1)
+        req_id = strip_trailing_zeros(match.group(1))
         req = project.get_requirement(req_id)
         if req:
             # Calculate relative path to requirement's document

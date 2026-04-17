@@ -10,7 +10,7 @@ from pathlib import Path
 
 import markdown
 
-from .core import Document, Project, Requirement, export_sqlite, sort_key
+from .core import Document, Project, Requirement, export_sqlite, sort_key, strip_trailing_zeros
 
 
 # HTML Templates
@@ -26,7 +26,7 @@ BASE_TEMPLATE = """<!DOCTYPE html>
 </head>
 <body>
     <nav>
-        <a href="{root_path}index.html"><img src="{root_path}logo-white.svg" alt="reqsmd" style="height:24px;vertical-align:middle;"></a>
+        <a href="{root_path}index.html"><img src="{root_path}logo-white.svg" alt="reqsmd"></a>
         <a href="{root_path}search.html"{nav_search}>Search</a>
     </nav>
     <div>
@@ -72,7 +72,7 @@ SEARCH_CONTENT = """        <div id="search-controls">
             <input type="text" id="sql-input" placeholder="SQL: SELECT * FROM requirements WHERE ...">
         </div>
         <div id="results">
-            <div id="error-message" style="display:none"></div>
+            <div id="error-message"></div>
             <table id="results-table">
                 <thead></thead>
                 <tbody></tbody>
@@ -105,14 +105,13 @@ def get_indent_level(req_id: str) -> int:
     """
     parts = req_id.rsplit('-', 1)
     suffix = parts[-1] if len(parts) > 1 else req_id
-    if suffix.endswith('.0'):
-        suffix = suffix[:-2]
     dot_count = suffix.count('.')
     return min(dot_count + 1, 3)
 
 
 def make_req_link_html(req_id: str, project: Project, current_doc: Document) -> str:
     """Generate an HTML link for a single requirement ID."""
+    req_id = strip_trailing_zeros(req_id)
     req = project.get_requirement(req_id)
     if req:
         req_doc_path = req.file_path.parent
