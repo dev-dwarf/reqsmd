@@ -216,7 +216,16 @@ def generate_requirement_html(req: Requirement, project: Project, current_doc: D
     status = (status_map or {}).get(req.id)
     status_html = ""
     if status == "FAIL":
-        status_html = "<strong>FAIL</strong>"
+        rid = req.id.replace("'", "''")
+        recursive_sql = (
+            f"WITH RECURSIVE dependents(id) AS ("
+            f"SELECT link_from FROM links WHERE link_to = '{rid}' "
+            f"UNION SELECT l.link_from FROM links l JOIN dependents d ON l.link_to = d.id"
+            f") SELECT r.* FROM requirements r JOIN dependents d ON r.id = d.id "
+            f"WHERE r.verified_status = 'STALE'"
+        )
+        sql = urllib.parse.quote(recursive_sql)
+        status_html = f'<strong><a href="{root_path}search.html?sql={sql}">FAIL</a></strong>'
     elif status == "STALE":
         rid = req.id.replace("'", "''")
         recursive_sql = (
