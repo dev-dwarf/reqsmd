@@ -1,0 +1,9 @@
+<svg viewBox="0 0 120 30" xmlns="http://www.w3.org/2000/svg">
+  <!-- Arrow from right to left across the top -->
+  <line x1="29" y1="5" x2="8" y2="5" stroke="#0055FF" stroke-width="2.5" stroke-linecap="round"/>
+  <polyline points="11,2 7,5 11,8" fill="none" stroke="#0055FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- V shape -->
+  <polyline points="1,5 15,28 29,5" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Text -->
+  <text x="37" y="22" font-family="Verdana, sans-serif" font-size="18" font-weight="700" fill="white">reqsmd</text>
+</svg>

@@ -215,6 +215,7 @@ function buildColumnsUI() {
 
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
+        checkbox.className = 'col-check';
         checkbox.id = `col-${col}`;
         checkbox.checked = !hiddenColumns.has(col);
         checkbox.addEventListener('change', () => {
@@ -229,7 +230,6 @@ function buildColumnsUI() {
 
         const grip = document.createElement('span');
         grip.className = 'drag-grip';
-        grip.textContent = '⋮⋮';
 
         div.appendChild(grip);
         div.appendChild(checkbox);

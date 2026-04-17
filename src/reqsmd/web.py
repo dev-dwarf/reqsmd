@@ -23,38 +23,30 @@ BASE_TEMPLATE = """<!DOCTYPE html>
     <title>{title} - reqsmd</title>
     <link rel="stylesheet" href="{root_path}style.css">
     {head_extra}
-    <script>
-        if (localStorage.getItem('compactView') === 'true') {{
-            document.documentElement.className = 'compact-view';
-        }}
-    </script>
 </head>
-<body{body_attrs}>
-    <nav class="sidebar">
-        <div class="nav-header">
-            <a href="{root_path}index.html">reqsmd</a>
-            <a href="{root_path}search.html" class="nav-link{nav_search}">Search</a>
-        </div>
-        {parent_link}
-        {toc}
+<body>
+    <nav>
+        <a href="{root_path}index.html"><img src="{root_path}logo.svg" alt="reqsmd" style="height:24px;vertical-align:middle;"></a>
+        <a href="{root_path}search.html"{nav_search}>Search</a>
     </nav>
-    <main class="content{content_class}">
-        {content}
-    </main>
+    <div>
+        {sidebar}
+        <main>
+            {content}
+        </main>
+    </div>
     <script>
         document.addEventListener('DOMContentLoaded', function() {{
             var toggle = document.getElementById('compact-toggle');
-            if (toggle) {{
-                if (localStorage.getItem('compactView') === 'true') {{
-                    document.body.classList.add('compact-view');
-                    toggle.classList.add('active');
-                }}
-                toggle.addEventListener('click', function() {{
-                    document.body.classList.toggle('compact-view');
-                    toggle.classList.toggle('active');
-                    localStorage.setItem('compactView', document.body.classList.contains('compact-view'));
-                }});
-            }}
+            if (!toggle) return;
+            var active = localStorage.getItem('compactView') === 'true';
+            if (active) {{ document.body.classList.add('compact-view'); toggle.setAttribute('aria-pressed', 'true'); }}
+            toggle.addEventListener('click', function() {{
+                document.body.classList.toggle('compact-view');
+                var on = document.body.classList.contains('compact-view');
+                toggle.setAttribute('aria-pressed', on);
+                localStorage.setItem('compactView', on);
+            }});
         }});
     </script>
 </body>
@@ -62,24 +54,22 @@ BASE_TEMPLATE = """<!DOCTYPE html>
 """
 
 # Search page content (injected into BASE_TEMPLATE; no Python format placeholders)
-SEARCH_CONTENT = """        <div class="search-controls">
-            <div class="search-row">
+SEARCH_CONTENT = """        <div id="search-controls">
+            <div id="search-row">
                 <input type="text" id="search-input" placeholder="Search requirements...">
-                <button id="search-btn">Search</button>
+                <button type="button" id="search-btn">Search</button>
             </div>
-            <div class="options-row">
-                <div class="columns-dropdown">
-                    <button id="columns-toggle-btn" type="button">Columns</button>
+            <div id="options-row">
+                <div>
+                    <button type="button" id="columns-toggle-btn">Columns</button>
                     <div id="columns-popup" class="columns-popup">
                         <div id="columns-container"></div>
                     </div>
                 </div>
-                <div class="filters-row" id="filters-container"></div>
-                <button id="reset-btn" type="button" class="reset-btn">Reset</button>
+                <div id="filters-container"></div>
+                <button type="button" id="reset-btn">Reset</button>
             </div>
-            <div class="sql-row">
-                <input type="text" id="sql-input" placeholder="SQL: SELECT * FROM requirements WHERE ...">
-            </div>
+            <input type="text" id="sql-input" placeholder="SQL: SELECT * FROM requirements WHERE ...">
         </div>
         <div id="results">
             <div id="error-message" style="display:none"></div>
@@ -92,20 +82,15 @@ SEARCH_CONTENT = """        <div class="search-controls">
 
 
 def _render_page(title: str, root_path: str, content: str, *,
-                 parent_link: str = "", toc: str = "",
-                 head_extra: str = "", body_attrs: str = "",
-                 nav_active: str = "", content_class: str = "") -> str:
+                 sidebar: str = "", head_extra: str = "", nav_active: str = "") -> str:
     """Render a page using BASE_TEMPLATE."""
     return BASE_TEMPLATE.format(
         title=title,
         root_path=root_path,
         content=content,
-        parent_link=parent_link,
-        toc=toc,
+        sidebar=sidebar,
         head_extra=head_extra,
-        body_attrs=body_attrs,
-        nav_search=" active" if nav_active == "search" else "",
-        content_class=f" {content_class}" if content_class else "",
+        nav_search=' class="active"' if nav_active == "search" else "",
     )
 
 
@@ -133,16 +118,14 @@ def make_req_link_html(req_id: str, project: Project, current_doc: Document) -> 
         req_doc_path = req.file_path.parent
         rel_path = os.path.relpath(req_doc_path, current_doc.path)
         href = f"index.html#{req_id}" if rel_path == "." else f"{rel_path}/index.html#{req_id}"
-        return f'<a href="{href}" class="req-link">{req_id}</a>'
-    return f'<span class="req-link-broken">{req_id}</span>'
+        return f'<a href="{href}">{req_id}</a>'
+    return f'<del>{req_id}</del>'
 
 
 def generate_requirement_html(req: Requirement, project: Project, current_doc: Document,
-                              hidden_fields: set[str] = None,
-                              compact_hidden_fields: set[str] = None) -> str:
+                              hidden_fields: set[str] = None) -> str:
     """Generate HTML for a single requirement."""
     hidden_fields = hidden_fields or set()
-    compact_hidden_fields = compact_hidden_fields or set()
 
     # Resolve [[REQID]] references in content, skipping code blocks
     code_pattern = re.compile(r'(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`]*`)')
@@ -175,21 +158,16 @@ def generate_requirement_html(req: Requirement, project: Project, current_doc: D
     for tag in block_tags:
         content_html = content_html.replace(tag, tag + '\n')
 
-    def meta_class(field_name: str) -> str:
-        if field_name in compact_hidden_fields:
-            return 'meta-item compact-hide'
-        return 'meta-item'
-
     meta_parts = []
     if "priority" not in hidden_fields and req.priority is not None:
-        meta_parts.append(f'<span class="{meta_class("priority")}">Priority: {req.priority}</span>')
+        meta_parts.append(f'<span>Priority: {req.priority}</span>')
     special_fields = {"priority", "req"}
     for key, value in req.metadata.items():
         if key in hidden_fields or key in special_fields:
             continue
         if isinstance(value, list):
             value = ", ".join(str(v) for v in value)
-        meta_parts.append(f'<span class="{meta_class(key)}">{html.escape(key)}: {html.escape(str(value))}</span>')
+        meta_parts.append(f'<span>{html.escape(key)}: {html.escape(str(value))}</span>')
 
     meta_html = " ".join(meta_parts) if meta_parts else ""
 
@@ -202,7 +180,7 @@ def generate_requirement_html(req: Requirement, project: Project, current_doc: D
         if req.link_from:
             from_links = ", ".join(make_req_link_html(fid, project, current_doc) for fid in req.link_from)
             links_parts.append(f'<div class="links-from">Linked from: {from_links}</div>')
-        links_html = '<div class="req-links">' + "".join(links_parts) + '</div>'
+        links_html = '<footer>' + "".join(links_parts) + '</footer>'
 
     req_text = req.metadata.get("req")
     req_text_html = ""
@@ -217,89 +195,93 @@ def generate_requirement_html(req: Requirement, project: Project, current_doc: D
                 rendered_parts.append(re.sub(r'\[\[([^\]]+)\]\]',
                                              lambda m: make_req_link_html(m.group(1), project, current_doc),
                                              escaped))
-        req_text_html = f'<div class="req-statement">{"".join(rendered_parts)}</div>'
+        req_text_html = f'<p>{"".join(rendered_parts)}</p>'
 
     rationale_html = ""
     if content_html.strip():
-        rationale_html = f'''
-        <div class="req-rationale">
-            <h3 class="rationale-label">Rationale</h3>
-            <div class="rationale-content">
-                {content_html}
-            </div>
-        </div>'''
+        rationale_html = f'<blockquote>{content_html}</blockquote>'
 
     level = get_indent_level(req.id)
     heading_tag = f"h{level + 1}"
 
     return f"""
-    <article class="requirement" id="{html.escape(req.id)}" data-level="{level}">
-        <header class="req-header">
+    <article id="{html.escape(req.id)}">
+        <header>
             <{heading_tag}><a href="#{html.escape(req.id)}">{html.escape(req.id)}</a></{heading_tag}>
-            <div class="req-meta">{meta_html}</div>
-        </header>
-        <div class="req-content">
             {req_text_html}
-            {rationale_html}
-        </div>
+            {meta_html}
+        </header>
+        {rationale_html}
         {links_html}
     </article>
     """
 
 
-def generate_document_page(doc: Document, project: Project, hidden_fields: set[str] = None,
-                           compact_hidden_fields: set[str] = None) -> str:
+def _build_toc(requirements: list) -> str:
+    if not requirements:
+        return ""
+    parts = ["<ul>"]
+    current_level = 1
+    first = True
+    for req in requirements:
+        level = get_indent_level(req.id)
+        if level > current_level:
+            for _ in range(level - current_level):
+                parts.append("<ul>")
+        elif level < current_level:
+            for _ in range(current_level - level):
+                parts.append("</li></ul>")
+            parts.append("</li>")
+        elif not first:
+            parts.append("</li>")
+        parts.append(f'<li><a href="#{html.escape(req.id)}">{html.escape(req.id)}</a>')
+        current_level = level
+        first = False
+    for _ in range(current_level - 1):
+        parts.append("</li></ul>")
+    parts.append("</li></ul>")
+    return "".join(parts)
+
+
+def generate_document_page(doc: Document, project: Project, hidden_fields: set[str] = None) -> str:
     """Generate HTML page for a document."""
     hidden_fields = hidden_fields or set()
-    compact_hidden_fields = compact_hidden_fields or set()
 
     rel_path = os.path.relpath(doc.path, project.root_path)
     root_path = "" if rel_path == "." else "../" * (rel_path.count(os.sep) + 1)
 
-    reqs_html = [generate_requirement_html(req, project, doc, hidden_fields, compact_hidden_fields)
+    reqs_html = [generate_requirement_html(req, project, doc, hidden_fields)
                  for req in doc.requirements]
 
-    children_html = ""
-    if doc.children:
-        parts = ["<section class='child-docs compact-hide'><h2>Child Documents</h2><ul>"]
-        for child in doc.children:
-            child_rel = os.path.relpath(child.path, doc.path)
-            parts.append(f'<li><a href="{child_rel}/index.html">{html.escape(child.name)}</a></li>')
-        parts.append("</ul></section>")
-        children_html = "\n".join(parts)
-
     content = f"""
-    <header class="doc-header">
-        <h1>{html.escape(doc.name)}</h1>
-        <div class="doc-controls">
-            <button id="compact-toggle" class="compact-toggle">Compact</button>
-        </div>
-    </header>
-    {children_html}
-    <section class="requirements">
+    <h2>{html.escape(doc.name)}</h2>
+    <section>
         {"".join(reqs_html)}
     </section>
     """
 
-    # Table of contents
-    toc = ""
-    if doc.requirements:
-        toc_parts = ['<div class="nav-section-header">Contents</div>', '<ul class="nav-toc">']
-        for req in doc.requirements:
-            level = get_indent_level(req.id)
-            toc_parts.append(f'<li class="toc-level-{level}"><a href="#{html.escape(req.id)}">{html.escape(req.id)}</a></li>')
-        toc_parts.append('</ul>')
-        toc = '\n'.join(toc_parts)
+    # Build aside sidebar with compact toggle, parent link, child docs, and TOC
+    sidebar = ""
+    if doc.parent or doc.children or doc.requirements:
+        aside_parts = ["<aside>"]
+        aside_parts.append('<button id="compact-toggle" aria-pressed="false">Compact</button>')
+        aside_parts.append("<ul>")
+        if doc.parent:
+            parent = doc.parent
+            parent_rel = os.path.relpath(parent.path, project.root_path)
+            href = f"{root_path}index.html" if parent_rel == "." else f"{root_path}{parent_rel}/index.html"
+            aside_parts.append(f'<li><a href="{href}">← {html.escape(parent.name)}</a></li>')
+        if doc.children:
+            for child in doc.children:
+                child_rel = os.path.relpath(child.path, doc.path)
+                aside_parts.append(f'<li><a href="{child_rel}/index.html">{html.escape(child.name)} →</a></li>')
+        aside_parts.append("</ul>")
+        if doc.requirements:
+            aside_parts.append(_build_toc(doc.requirements))
+        aside_parts.append("</aside>")
+        sidebar = "\n".join(aside_parts)
 
-    # Parent link
-    parent_link = ""
-    if doc.parent:
-        parent = doc.parent
-        parent_rel = os.path.relpath(parent.path, project.root_path)
-        href = f"{root_path}index.html" if parent_rel == "." else f"{root_path}{parent_rel}/index.html"
-        parent_link = f'<div class="nav-parent"><a href="{href}">← {html.escape(parent.name)}</a></div>'
-
-    return _render_page(doc.name, root_path, content, parent_link=parent_link, toc=toc)
+    return _render_page(doc.name, root_path, content, sidebar=sidebar)
 
 
 def generate_website(project: Project, output_path: Path):
@@ -323,7 +305,6 @@ def generate_website(project: Project, output_path: Path):
     export_sqlite(project, output_path / "requirements.db")
 
     hidden_fields = project.get_hidden_fields()
-    compact_hidden_fields = project.get_compact_hidden_fields()
 
     template_fields = {}
     for key, value in project.template.items():
@@ -339,8 +320,7 @@ def generate_website(project: Project, output_path: Path):
     )
     (output_path / "search.html").write_text(
         _render_page("Search", "", SEARCH_CONTENT,
-                     head_extra=search_head, nav_active="search",
-                     content_class="search-content"),
+                     head_extra=search_head, nav_active="search"),
         encoding="utf-8"
     )
 
@@ -348,5 +328,5 @@ def generate_website(project: Project, output_path: Path):
         rel_path = os.path.relpath(doc.path, project.root_path)
         doc_output = output_path if rel_path == "." else output_path / rel_path
         doc_output.mkdir(parents=True, exist_ok=True)
-        doc_html = generate_document_page(doc, project, hidden_fields, compact_hidden_fields)
+        doc_html = generate_document_page(doc, project, hidden_fields)
         (doc_output / "index.html").write_text(doc_html, encoding="utf-8")
