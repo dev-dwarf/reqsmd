@@ -29,7 +29,7 @@ BASE_TEMPLATE = """<!DOCTYPE html>
 </head>
 <body>
     <nav>
-        <a href="{root_path}index.html"><img src="{root_path}logo-black.svg" alt="reqsmd"></a>
+        <a href="{root_path}index.html"><img src="{root_path}logo-white.svg" alt="reqsmd"></a>
         <a href="{root_path}search.html"{nav_search}>Search</a>
     </nav>
     <div>
