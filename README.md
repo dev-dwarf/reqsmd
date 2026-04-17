@@ -1,4 +1,4 @@
-![reqsmd logo](static/logo.svg)
+![reqsmd logo](static/logo-black.svg)
 
 Requirements management using plain markdown files. Requirements live in version control alongside your code.
 
