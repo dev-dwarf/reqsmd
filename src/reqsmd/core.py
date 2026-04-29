@@ -162,7 +162,7 @@ def extract_references(content: str) -> list[str]:
     """Extract [[REQID]] references from markdown content, skipping code blocks and spans."""
     code_pattern = re.compile(r'```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`]*`')
     non_code = code_pattern.sub('', content)
-    matches = re.findall(r'\[\[([^\]]+)\]\]', non_code)
+    matches = re.findall(r'(?<!!)\[\[([^\]]+)\]\]', non_code)
     seen = set()
     result = []
     for m in matches:

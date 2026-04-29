@@ -16,6 +16,9 @@ from .core import (Document, Project, Requirement, compute_cascade_failures, exp
                    sort_key, strip_trailing_zeros)
 
 
+_WIKI_LINK_RE = re.compile(r'(!)?\[\[([^\]]+)\]\]')
+
+
 # HTML Templates
 
 BASE_TEMPLATE = """<!DOCTYPE html>
@@ -136,14 +139,17 @@ def generate_requirement_html(req: Requirement, project: Project, current_doc: D
     hidden_fields = hidden_fields or set()
 
     # Resolve [[REQID]] references in content, skipping code blocks
+    wiki = lambda m: (
+        f'<img src="{root_path}images/{urllib.parse.quote(m.group(2))}" alt="{html.escape(m.group(2))}">'
+        if m.group(1) else make_req_link_html(m.group(2), project, current_doc)
+    )
+
     code_pattern = re.compile(r'(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`]*`)')
     parts = code_pattern.split(req.content)
     resolved_parts = []
     for i, part in enumerate(parts):
         if i % 2 == 0:
-            resolved_parts.append(re.sub(r'\[\[([^\]]+)\]\]',
-                                         lambda m: make_req_link_html(m.group(1), project, current_doc),
-                                         part))
+            resolved_parts.append(_WIKI_LINK_RE.sub(wiki, part))
         else:
             resolved_parts.append(part)
     content_resolved = ''.join(resolved_parts)
@@ -204,9 +210,7 @@ def generate_requirement_html(req: Requirement, project: Project, current_doc: D
                 rendered_parts.append(f'<code>{html.escape(part[1:-1])}</code>')
             else:
                 escaped = html.escape(part)
-                rendered_parts.append(re.sub(r'\[\[([^\]]+)\]\]',
-                                             lambda m: make_req_link_html(m.group(1), project, current_doc),
-                                             escaped))
+                rendered_parts.append(_WIKI_LINK_RE.sub(wiki, escaped))
         req_text_html = f'<p>{"".join(rendered_parts)}</p>'
 
     rationale_html = ""
@@ -373,6 +377,18 @@ def generate_website(project: Project, output_path: Path):
                      head_extra=search_head, nav_active="search"),
         encoding="utf-8"
     )
+
+    images_output = output_path / "images"
+    seen_images: set[str] = set()
+    for req in project.all_requirements():
+        for excl, name in _WIKI_LINK_RE.findall(req.content):
+            if excl and name not in seen_images:
+                candidate = req.file_path.parent / name
+                src = candidate if candidate.exists() else next(project.root_path.rglob(name), None)
+                if src:
+                    images_output.mkdir(exist_ok=True)
+                    shutil.copy(src, images_output / src.name)
+                    seen_images.add(name)
 
     for doc in project.all_documents():
         rel_path = os.path.relpath(doc.path, project.root_path)
