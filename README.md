@@ -67,6 +67,7 @@ Verify requirements and check the project:
 ```
 reqsmd req verify SYS-1 alice           # hash and sign a requirement
 reqsmd req verify SYS-2 alice --force   # recursively verify dependencies first
+reqsmd req check SYS-1                  # check a single requirement's status
 reqsmd check                            # check all — prints FAIL / UNVERIFIED / STALE
 ```
 
@@ -80,6 +81,19 @@ reqsmd export csv [--doc PATH] [--output FILE]
 reqsmd export sqlite [--doc PATH] [--output FILE]
 python3 -m http.server --directory _site
 ```
+
+Import from CSV:
+
+```
+reqsmd import csv requirements.csv --id-col ID --req-col Text [--output DIR]
+```
+
+- `--id-col` — column to use as requirement ID (required)
+- `--req-col` — column to use as requirement text (required)
+- `--rationale-col` — column to use as the markdown body
+- `--doc-col` — column to use as the document subfolder
+- `--attrs COL ...` — additional columns to include as metadata fields
+- `--output` — output directory (default: CSV filename without extension)
 
 ## Recommended Tools
 
