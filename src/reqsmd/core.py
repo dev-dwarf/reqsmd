@@ -5,6 +5,7 @@ import json
 import os
 import re
 import sqlite3
+import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -19,6 +20,7 @@ class Requirement:
     file_path: Path = None
     link_to: list[str] = field(default_factory=list)
     link_from: list[str] = field(default_factory=list)
+    edit_date: str = ""
 
     @property
     def priority(self) -> int | None:
@@ -233,6 +235,28 @@ def load_project(root_path: str | Path) -> Project:
     for req in root_doc.all_requirements:
         req_index[req.id] = req
 
+    # Populate edit_date from git history in two calls regardless of requirement count
+    repo_root_proc = subprocess.run(
+        ['git', 'rev-parse', '--show-toplevel'],
+        capture_output=True, text=True, cwd=root_path.resolve(),
+    )
+    if repo_root_proc.returncode == 0:
+        repo_root = Path(repo_root_proc.stdout.strip())
+        log = subprocess.run(
+            ['git', 'log', '--format=COMMIT %cd', '--date=short', '--name-only'],
+            capture_output=True, text=True, cwd=repo_root,
+        ).stdout
+        timestamps: dict[str, str] = {}
+        current_date = ""
+        for line in log.splitlines():
+            if line.startswith("COMMIT "):
+                current_date = line[7:]
+            elif line and current_date and line not in timestamps:
+                timestamps[line] = current_date
+        for req in req_index.values():
+            rel = req.file_path.resolve().relative_to(repo_root).as_posix()
+            req.edit_date = timestamps.get(rel, "")
+
     # Resolve link_from references
     for req in root_doc.all_requirements:
         for target_id in req.link_to:
@@ -281,7 +305,8 @@ def export_sqlite(project: Project, output_path: Path | str) -> int:
             link_to TEXT,
             link_from TEXT,
             parent TEXT,
-            verified_status TEXT
+            verified_status TEXT,
+            edit_date TEXT
             {', ' + columns_sql if columns_sql else ''}
         )
     """)
@@ -316,6 +341,7 @@ def export_sqlite(project: Project, output_path: Path | str) -> int:
             "link_from": ";".join(req.link_from),
             "parent": "" if parent_path == "." else parent_path,
             "verified_status": status,
+            "edit_date": req.edit_date,
         }
         for key in meta_columns:
             value = req.metadata.get(key)
