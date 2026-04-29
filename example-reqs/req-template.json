@@ -1,9 +1,4 @@
 {
-  "req": {
-    "show-search": true,
-    "show-compact": true,
-    "verified": true,
-  },
   "priority": {
     "show-search": true,
     "show-compact": true,
@@ -20,16 +15,6 @@
     "verified": true,
   },
   "author": {
-    "show-search": false,
-    "show-compact": false,
-    "verified": false,
-  },
-  "verified-hash": {
-    "show-search": false,
-    "show-compact": false,
-    "verified": false,
-  },
-  "verified-by": {
     "show-search": false,
     "show-compact": false,
     "verified": false,

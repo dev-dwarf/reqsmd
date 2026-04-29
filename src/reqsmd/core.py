@@ -217,15 +217,21 @@ def load_project(root_path: str | Path) -> Project:
     """Load a complete project from a root directory."""
     root_path = Path(root_path)
 
-    # Load template if it exists
+    _builtin_template = {
+        "req":           {"show-search": True,  "show-compact": True,  "verified": True},
+        "verified-hash": {"show-search": False, "show-compact": False, "verified": False},
+        "verified-by":   {"show-search": False, "show-compact": False, "verified": False},
+    }
+
     template_path = root_path / "req-template.json"
     if template_path.exists():
         try:
-            template = parse_lenient_json(template_path.read_text(encoding="utf-8"))
+            user_template = parse_lenient_json(template_path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, IOError):
-            template = {}
+            user_template = {}
     else:
-        template = {}
+        user_template = {}
+    template = {**_builtin_template, **user_template}
 
     # Load root document
     root_doc = load_document(root_path)
